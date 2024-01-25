@@ -7,9 +7,12 @@
   *
   */
 
-#include <math.h>				// fabs
+#include <math.h>				// fabs, M_PI
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_fft_real.h>
+
+/** \brief Period of nominal halo orbit */
+static const double T = 0.3059226605957322E+01;
 
 /**
   * \brief Compute radix-2 FFT for real data and return trigonometric series
@@ -81,6 +84,48 @@ void real_fft(int n, double y[n], double A[n/2+1], double B[n/2+1])
 }
 
 /**
+  * \brief Write coefs of trigonometric series to stdout
+  *
+  * @param[in]      N				Number of coefs in trig series.
+  * @param[in]		A               For each coordinate, coefs of cosine series A_1, ..., A_N
+  * @param[in]		B               For each coordinate, coefs of sine series B_1, ..., B_N
+  */
+
+void write_coefs(int N, double A[6][N], double B[6][N])
+{
+	/* Write coefs to stdout */
+	for(int d=0; d<6; d++)
+	{
+		for (int i = 0; i < N; i++)
+		{
+			fprintf (stdout, "%le %le ", A[d][i], B[d][i]);
+		}
+		fprintf(stdout, "\n");
+	}
+}
+
+/**
+  * \brief Read coefs of trigonometric series from stdin
+  *
+  * @param[in]      N				Number of coefs in trig series.
+  * @param[out]		A               For each coordinate, coefs of cosine series A_1, ..., A_N
+  * @param[out]		B               For each coordinate, coefs of sine series B_1, ..., B_N
+  */
+
+void read_coefs(int N, double A[6][N], double B[6][N])
+{
+	/* Read coefs from stdin */
+	for(int d=0; d<6; d++)
+	{
+		for (int i = 0; i < N; i++)
+		{
+			fscanf (stdin, "%le %le ", &(A[d][i]), &(B[d][i]));
+		}
+		fscanf(stdin, "\n");
+	}
+}
+
+/**
  * \brief Given \f$ x \f$, evaluate trigonometric series at \f$ x \f$
  *
  * @param[in] N     Degree of Fourier series
@@ -100,3 +145,22 @@ double eval_trig_series (size_t N, double A[N+1], double B[N+1], double x)
     return res;
 }
 
+/**
+ * \brief Given time \f$ t \f$, evaluate orbit at \f$ t \f$
+ *
+ * This function returns an approximation to the point orbit(t), by evaluating
+ * the trigonometric series of each component (x,px,y,py,z,pz).
+ *
+ * @param[in] N     Number of total coefs of Fourier series
+ * @param[in] A     Fourier coeffs of every component
+ * @param[in] B     Fourier coeffs of every component
+ * @param[in] deg   Desired degree we want to use when evaluating series
+ * @param[in] t     Argument of Fourier series
+ * @param[out] p    Point orbit(t)
+ */
+void eval_orbit (int N, double A[6][N], double B[6][N], int deg, double t,
+		double p[6]) 
+{
+	for(int i=0; i<6; i++)
+		p[i] = eval_trig_series(deg, A[i], B[i], 2*M_PI*t/T);
+}

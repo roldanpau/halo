@@ -30,11 +30,12 @@ static const size_t DIM = 6;
   * @param[in]		tol				Tolerance to integration error.
   * @param[in]		hmin			Minimum step size.
   * @param[in]		hmax			Maximum step size.
+  * @param[in]		bPrint			Flag to print orbit (if bPrint = true)
   *
   * \return		Currently, simply returns 0 (no error control).
   */
 int int_rtbp(double total_time, double *x, double tol, double hmin, double
-		hmax)
+		hmax, int bPrint)
 {
    void rtbp(double t, double *x, int n, double *y);
    double t,h;
@@ -47,9 +48,12 @@ int int_rtbp(double total_time, double *x, double tol, double hmin, double
 
    while(t<total_time)
    {
-	  printf("%24.16e", t);
-	  for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
-	  printf("\n");
+	   if(bPrint)
+	   {
+		   printf("%24.16e", t);
+		   for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
+		   printf("\n");
+	   }
 	   if(t+h > total_time)
 	   {
 		   h = total_time - t;

@@ -6,14 +6,14 @@ import numpy as np
 current_dir = os.getcwd()
 _halo = CDLL(current_dir + "/libhalo.so")
 _halo.int_rtbp.argtypes = (c_double, POINTER(c_double), c_double, c_double,
-        c_double)
+        c_double, c_int)
 
-def int_rtbp(t, x, tol, hmin, hmax):
+def int_rtbp(t, x, tol, hmin, hmax, bPrint):
     global _halo
     array_type = c_double * 6
     x = (array_type)(*x)
     result = _halo.int_rtbp(c_double(t), x, c_double(tol), 
-            c_double(hmin), c_double(hmax))
+            c_double(hmin), c_double(hmax), c_int(bPrint))
     return np.array(x)
 
 # Set numpy to use this lambda function for every float it prints out
@@ -35,9 +35,10 @@ n = 128             # number of points in the orbit
 h = t/n             # required step size for n points
 hmin = h            # min step size
 hmax = h            # max step size
+bPrint = 1          # set print flag to True
 
 print("The initial condition is: ", x)
 print("The step size is: ", h, flush=True)
-y = int_rtbp(t, x, tol, hmin, hmax)
+y = int_rtbp(t, x, tol, hmin, hmax, bPrint)
 print("The final condition is: ", y)
 print("Error = Initial condition - Final condition = ", np.subtract(x, y))

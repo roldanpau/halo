@@ -1,4 +1,4 @@
-progs = fft
+progs = fft reward
 
 OBJS = rk78.o int_rtbp.o fft_module.o
 
@@ -15,6 +15,8 @@ libhalo.so: $(OBJS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -shared -o $@ $(OBJS) $(LDLIBS)
 
 fft: fft_module.o
+
+reward: rk78.o int_rtbp.o fft_module.o
 
 clean:
 	rm libhalo.so $(OBJS) $(progs)
