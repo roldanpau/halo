@@ -44,18 +44,21 @@ int int_rtbp(double total_time, double *x, double tol, double hmin, double
    /* integrate initial condition up to time "total_time" */
    t=0.e0;
    h=hmax;
+
    while(t<total_time)
    {
+	  printf("%24.16e", t);
+	  for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
+	  printf("\n");
 	   if(t+h > total_time)
 	   {
 		   h = total_time - t;
 		   hmin = hmax = h;
 	   }
       rk78(&t,x,&h,tol,hmin,hmax,DIM,rtbp);
-	  printf("%24.16e", t);
-	  for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
-	  printf("\n");
    }
+
+   fflush(stdout);
 
    end_rk78(6);
 

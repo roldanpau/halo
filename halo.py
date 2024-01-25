@@ -1,9 +1,10 @@
 import os
+import sys              # sys.stdout.flush
 from ctypes import *
 import numpy as np
 
 current_dir = os.getcwd()
-_halo = CDLL(current_dir + "/halo_functions.so")
+_halo = CDLL(current_dir + "/libhalo.so")
 _halo.int_rtbp.argtypes = (c_double, POINTER(c_double), c_double, c_double,
         c_double)
 
@@ -30,9 +31,13 @@ x = np.array([xJ[0], xJ[3]-xJ[1], xJ[1], xJ[4]+xJ[0], xJ[2], xJ[5]])
 
 t = 0.3059226605957322E+01  # integration time
 tol = 1.e-14        # tolerance to integration error
-hmin = hmax = 1.e-3   # min/max step size
+n = 128             # number of points in the orbit
+h = t/n             # required step size for n points
+hmin = h            # min step size
+hmax = h            # max step size
 
 print("The initial condition is: ", x)
+print("The step size is: ", h, flush=True)
 y = int_rtbp(t, x, tol, hmin, hmax)
 print("The final condition is: ", y)
 print("Error = Initial condition - Final condition = ", np.subtract(x, y))
