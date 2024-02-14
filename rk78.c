@@ -104,6 +104,7 @@ n: dimension of the systems of odes. it should coincide with the value
    free(xpon);
    free(dx);
    for (j=0; j<13; j++) free(k[j]);
+   neq = 0;
    return;
 }
 double rk78(double *at, double x[], double *ah, double tol,

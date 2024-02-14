@@ -64,8 +64,65 @@ int int_rtbp(double total_time, double *x, double tol, double hmin, double
 
    fflush(stdout);
 
-   end_rk78(6);
+   end_rk78(DIM);
 
+   return(0);
+}
+
+/** 
+  * \brief Integrate trajectory of the RTBP until exiting LPO region.
+  *
+  * Numerically integrate the RTBP using a Runge-Kutta 7-8 method with
+  * automatic step-size control until trajectory exits the \f$L_1\f$ Libration
+  * Point Orbit region of the Sun-Earth RTBP.
+  *
+  * @param[inout]   x				On entry, it contains i.c. On exit, f.c.
+  * @param[in]		tol				Tolerance to integration error.
+  * @param[in]		hmin			Minimum step size.
+  * @param[in]		hmax			Maximum step size.
+  * @param[in]		bPrint			Flag to print orbit (if bPrint = true)
+  * @param[out]		tout			Exit time
+  * @param[out]		bLeft			Flag to specify if orbit leaves through
+  * left region (bLeft = true) or right region (bLeft = false).
+  *
+  * \return		Currently, simply returns 0 (no error control).
+  */
+int int_rtbp_exit(double *x, double tol, double hmin, double hmax, int bPrint,
+		double *tout, int *bLeft)
+{
+   void rtbp(double t, double *x, int n, double *y);
+   double t,h;
+
+	/* x coordinate of L_1 */
+   double x1 = -0.99003;
+
+	/* Width of the LPO region (in AU), equivalent to 150*10^6 km */
+   double LPO_width = 1.1e+06/150e+06;	
+
+   ini_rk78(DIM);
+
+   /* integrate initial condition up until exiting LPO region */
+   t=0.e0;
+   h=hmax;
+
+   while(x[0] > x1-LPO_width/2 && x[0] < x1+LPO_width/2)	/* Inside LPO */
+   {
+	   if(bPrint)
+	   {
+		   printf("%24.16e", t);
+		   for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
+		   printf("\n");
+	   }
+      rk78(&t,x,&h,tol,hmin,hmax,DIM,rtbp);
+   }
+
+   fflush(stdout);
+
+   end_rk78(DIM);
+
+   *tout = t;	/* Return exit time */
+   *bLeft = (x[0] <= x1-LPO_width/2 ? 1 : 0);	/* Did we leave through the
+												   left? */
    return(0);
 }
 

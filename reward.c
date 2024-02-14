@@ -22,25 +22,10 @@
 #include <gsl/gsl_randist.h>
 #include "int_rtbp.h"
 #include "fft_module.h"
+#include "utils_module.h"		// norm
 
 /** \brief Period of nominal halo orbit */
 static const double T = 0.3059226605957322E+01;
-
-/**
- * \brief Given vector \f$ v \f$, compute its Euclidean norm
- *
- * @param[in] n     dimension of vector
- * @param[in] v     vector
- *
- * @returns			Euclidean norm of vector
- */
-double norm(int n, double v[n])
-{
-	double res = 0;
-	for(int i=0; i<n; i++)
-		res += (v[i]*v[i]);
-	return sqrt(res);
-}
 
 int
 main (int argc, char *argv[])
