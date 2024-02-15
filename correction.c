@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>				// sqrt
+#include <math.h>				// fmin
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include "int_rtbp.h"			// int_rtbp_exit
@@ -37,6 +37,80 @@ static const size_t DIM = 6;
  */
 static const double T = 0.3059226605957322E+01;
 
+struct lag_params 
+{
+    double q90[6];  // state after 90 days (pos-vel)
+};
+
+/**
+  * \brief Measure the difference (`lag') between 450 days (=2.5T) and our exit
+  * time tout.
+  *
+  * Given a maneuver of magnitude dv, this function returns 
+  * \f\[ \min\{ 2.5T - tout, 0} \f\]
+  * multiplied by -1 (if we exit through the left) or by 1 (if we exit through
+  * the right. 
+  *
+  * Zeros of this function correspond to maneuvers dv that lead to an exit time
+  * tout greater than 2.5T. This function is used in the bisection procedure
+  * (see correction.c).
+  *
+  * @param[in]      dv	    Magnitude of the maneuver (may be negative)
+  * @param[in]      params	Parameters needed for this function (q90).
+  *
+  * @returns        lag \f$ \min\{ 2.5T - tout, 0} \f$
+  */
+double lag(double dv, void *params)
+{
+    struct lag_params *p = (struct lag_params *)params;
+
+	double q[DIM];		// q is a point in the orbit (pos-mom)
+	double q90[DIM];	// q90: state after 90 days (pos-vel)
+	double q90_new[DIM];	// q90 after maneuver
+	double v_mod;		// Modulus of velocity vector
+	
+	double tout;	/* exit time */
+	int bLeft;	/* Do we leave through the left or right? */
+
+	double Dv[3];	/* Maneuver (in the direction of current velocity) */
+
+    dblcpy(q90, p->q90, DIM);
+
+	v_mod = norm(3,&q90[3]);	// modulus of velocity vector
+
+    dblcpy(q90_new, q90, DIM);
+
+    /* Set maneuver to dv*(vx, vy, vz), where (vx, vy, vz) is a unitary
+     * vector tangent to current velocity */
+    Dv[0] = dv*q90[3]/v_mod;
+    Dv[1] = dv*q90[4]/v_mod;
+    Dv[2] = dv*q90[5]/v_mod;
+
+    /* Apply maneuver to q90 */
+    q90_new[3] += Dv[0];
+    q90_new[4] += Dv[1];
+    q90_new[5] += Dv[2];
+
+    /* My vectorfield expects the order x,px,y,py,z,pz. */
+    posvel_to_posmom(q90_new, q);
+
+    /* Integrate orbit until exiting the LPO region, with params
+     * tol=1.e-14, hmin=1.e-5, hmax=1.e-2, bPrint=0 */
+    int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeft);
+
+    if(tout > 2.5*T)
+    {
+        return(0);  /* We found a zero! */
+    }
+    else 
+    {
+        if(bLeft) 
+            return(-(2*T - tout));
+        else
+            return(2*T - tout);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -47,8 +121,8 @@ main (int argc, char *argv[])
 	double v_mod;		// Modulus of velocity vector
 	
 	double tout;	/* exit time */
-	int bLeft_A;	/* Do we leave through the left or right? (endpoint A) */
-	int bLeft_B;	/* Do we leave through the left or right? (endpoint B) */
+	int bLeftA;	/* Do we leave through the left or right? (endpoint A) */
+	int bLeftB;	/* Do we leave through the left or right? (endpoint B) */
 
 	double Dv[3];	/* Maneuver (in the direction of current velocity) */
 	double dv;		/* Modulus of the maneuver */
@@ -92,17 +166,27 @@ main (int argc, char *argv[])
 
 	/* Integrate orbit until exiting the LPO region, with params tol=1.e-14,
 	 * hmin=1.e-5, hmax=1.e-2, bPrint=1 */
-    int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeft_A);
+    int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeftA);
 
 	fprintf(stderr, "Exit time: %e\n", tout);
-	if(bLeft_A)
+	if(bLeftA)
 		fprintf(stderr, "Exiting through the left\n");
 	else
 		fprintf(stderr, "Exiting through the right\n");
 
+    if(tout > 2.5*T)
+    {
+        fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
+        exit(0);
+    }
+
+    /* If we reach this part of the code, it means that a correction maneuver
+     * is needed */
 
 	v_mod = norm(3,&q90[3]);	// modulus of velocity vector
-	for(dv=-1.e-10; dv>-1.e-1; dv-=1.e-10)
+
+    /* Try corrections with positive modulus */
+	for(dv=1.e-10; dv<1.e-5; dv+=1.e-10)
 	{
 		dblcpy(q90_new, q90, DIM);
 
@@ -122,17 +206,49 @@ main (int argc, char *argv[])
 
 		/* Integrate orbit until exiting the LPO region, with params
 		 * tol=1.e-14, hmin=1.e-5, hmax=1.e-2, bPrint=1 */
-		int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeft_B);
+		int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeftB);
 
-		if(bLeft_B != bLeft_A)
+		if(bLeftB != bLeftA)
 			break;
 	}
+
+    if(bLeftB == bLeftA)   
+    /* Could not find endpoint exiting through the other side */
+    {
+        /* Try corrections with negative modulus */
+        for(dv=-1.e-10; dv>-1.e-5; dv-=1.e-10)
+        {
+            dblcpy(q90_new, q90, DIM);
+
+            /* Set maneuver to dv*(vx, vy, vz), where (vx, vy, vz) is a unitary
+             * vector tangent to current velocity */
+            Dv[0] = dv*q90[3]/v_mod;
+            Dv[1] = dv*q90[4]/v_mod;
+            Dv[2] = dv*q90[5]/v_mod;
+
+            /* Apply maneuver to q90 */
+            q90_new[3] += Dv[0];
+            q90_new[4] += Dv[1];
+            q90_new[5] += Dv[2];
+
+            /* My vectorfield expects the order x,px,y,py,z,pz. */
+            posvel_to_posmom(q90_new, q);
+
+            /* Integrate orbit until exiting the LPO region, with params
+             * tol=1.e-14, hmin=1.e-5, hmax=1.e-2, bPrint=1 */
+            int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, &tout, &bLeftB);
+
+            if(bLeftB != bLeftA)
+                break;
+        }
+
+    }
 
 	fprintf(stderr, "dv: %e\n", dv);
 	fprintf(stderr, "Dv: %e %e %e\n", Dv[0], Dv[1], Dv[2]);
 
 	fprintf(stderr, "Exit time: %e\n", tout);
-	if(bLeft_B)
+	if(bLeftB)
 		fprintf(stderr, "Exiting through the left\n");
 	else
 		fprintf(stderr, "Exiting through the right\n");
