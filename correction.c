@@ -24,6 +24,9 @@
 #include <math.h>				// fmin
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_roots.h>
+
 #include "int_rtbp.h"			// int_rtbp_exit
 #include "utils_module.h"		// norm, dblcpy
 #include "cv_module.h"			// posvel_to_posmom
@@ -154,7 +157,7 @@ main (int argc, char *argv[])
 	/* Initial condition of perturbed orbit: we just add some noise to nominal
 	 * i.c. */
 	for(i=0; i<6; i++)
-		q[i] += gsl_ran_gaussian(r, q[i]*1.e-10);
+		q[i] += gsl_ran_gaussian(r, q[i]*1.e-9);
 
 	/* Integrate orbit for 90 days, or approximately half the period */
 	int_rtbp(0.5*T, q, 1.e-15, 1.e-5, 1.e-1, 0);
@@ -186,7 +189,7 @@ main (int argc, char *argv[])
 	v_mod = norm(3,&q90[3]);	// modulus of velocity vector
 
     /* Try corrections with positive modulus */
-	for(dv=1.e-10; dv<1.e-5; dv+=1.e-10)
+	for(dv=1.e-8; dv<1.e-5; dv+=1.e-8)
 	{
 		dblcpy(q90_new, q90, DIM);
 
@@ -216,7 +219,7 @@ main (int argc, char *argv[])
     /* Could not find endpoint exiting through the other side */
     {
         /* Try corrections with negative modulus */
-        for(dv=-1.e-10; dv>-1.e-5; dv-=1.e-10)
+        for(dv=-1.e-8; dv>-1.e-5; dv-=1.e-8)
         {
             dblcpy(q90_new, q90, DIM);
 
@@ -254,4 +257,53 @@ main (int argc, char *argv[])
 		fprintf(stderr, "Exiting through the right\n");
 
 	gsl_rng_free(r);
+
+    int status;
+    int iter = 0, max_iter = 100;
+    const gsl_root_fsolver_type *T;
+    gsl_root_fsolver *s;
+    double root = 0.0;
+    double x_lo = fmin(0.0, dv);
+    double x_hi = fmax(0.0, dv);
+    gsl_function F;
+    struct lag_params params;
+    double lag_r;   /* lag for the current root */
+
+    dblcpy(params.q90, q90, DIM);
+
+    F.function = &lag;
+    F.params = &params;
+
+    T = gsl_root_fsolver_bisection;
+    s = gsl_root_fsolver_alloc (T);
+    gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+
+    printf ("using %s method\n", gsl_root_fsolver_name (s));
+
+    printf ("%5s [%9s, %9s] %9s %9s\n", "iter", "lower", "upper", "root",
+            "err(est)");
+
+    do 
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      root = gsl_root_fsolver_root (s);
+      x_lo = gsl_root_fsolver_x_lower (s);
+      x_hi = gsl_root_fsolver_x_upper (s);
+      lag_r = lag(root, &params);
+      status = gsl_root_test_residual (lag_r, 0.1);
+
+      if (status == GSL_SUCCESS)
+        printf ("Converged:\n");
+
+      printf ("%5d [%.7f, %.7f] %.7f %.7f\n",
+              iter, x_lo, x_hi, root, lag_r);
+    }
+    while (status == GSL_CONTINUE && iter < max_iter);
+
+
+	fprintf(stderr, "Accepted maneuver:\n");
+    fprintf(stderr, "dv: %e\n", dv);
+	fprintf(stderr, "Dv: %e %e %e\n", Dv[0], Dv[1], Dv[2]);
+	fprintf(stderr, "Exit time: %e\n", tout);
 }
