@@ -1,5 +1,5 @@
 /** \file correction_module.c
-  * \brief Given an IC on the halo, find a small correction after 90d that ensures it remains inside the LPO region.
+  * \brief Given an IC close to the halo, find a small correction after 90d that ensures it remains inside the LPO region.
   *
   * Given an initial condition that is very close to the nominal halo periodic
   * orbit, find a (tiny) correction 90 days from now that ensures we stay on
@@ -13,7 +13,7 @@
   *
   * NOTES: 
   *	
-  * called by: correction.c	
+  * USED BY: correction.c	
   *
   */
 
@@ -33,18 +33,22 @@
   * region, and returns the integration time and whether it exits trough the
   * left or the right of the region.
   *
+  * \remark For convenience, the IC after applying the maneuver, \f$ q90 +
+  * \Delta v\f$, is returned in q90_new.
+  *
   * @param[in]		q90         I.c.  (pos-vel coordinates)
   * @param[in]      dv			Magnitude of the maneuver (may be negative)
   * @param[out]     tout        Exit time
   * @param[out]     bLeft       Flag to specify if orbit leaves through
   * left region (bLeft = true) or right region (bLeft = false).
+  * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
   *
   * \return     Currently, simply returns 0 (no error control).
   */
-int apply_correction(double q90[DIM], double dv, double *tout, int *bLeft)
+int apply_correction(double q90[DIM], double dv, double *tout, int *bLeft,
+		double q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
-	double q90_new[DIM];	// q90 after maneuver
 	double v_mod;		// Modulus of velocity vector
 	
 	double Dv[3];	/* Maneuver (in the direction of current velocity) */
@@ -72,13 +76,13 @@ int apply_correction(double q90[DIM], double dv, double *tout, int *bLeft)
     int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, tout, bLeft);
 }
 
-/**
+/** \enum lag_params
   * \brief Parameters to function "lag"
   */
 struct lag_params 
 {
-    double q90[6];  // state after 90 days (pos-vel)
-	double T;		// period of nominal periodic orbit (= 180 days aprox)
+    double q90[6];  ///< state after 90 days (pos-vel)
+	double T;		///< period of nominal periodic orbit (= 180 days aprox)
 };
 
 /**
@@ -99,6 +103,7 @@ struct lag_params
   *
   * @returns        lag \f$ \min\{ 2.5T - tout, 0} \f$
   */
+
 double lag(double dv, void *params)
 {
     struct lag_params *p = (struct lag_params *)params;
@@ -109,9 +114,12 @@ double lag(double dv, void *params)
 
 	double lag;		/* return value */
 
+	// auxiliary variables
+	double q90_new[DIM];
+
 	T = p->T;
 
-    apply_correction(p->q90, dv, &tout, &bLeft);
+    apply_correction(p->q90, dv, &tout, &bLeft, q90_new);
     if(tout > 2.5*T)
 		lag=0;  /* We found a zero! */
     else 
@@ -124,11 +132,33 @@ double lag(double dv, void *params)
 	return(lag);
 }
 
-double correction(double q_Masde[DIM], double T)
+/**
+  * \brief Given an IC close to the halo, find a small correction after 90d that ensures it remains inside the LPO region.
+  *
+  * Given an initial condition that is very close to the nominal halo periodic
+  * orbit, find a (tiny) correction 90 days from now that ensures we stay on
+  * the LPO region up to 450 more days, effectively shadowing the halo.
+  *
+  * The correction can be found in several ways. We start using a bisection
+  * method: Find an interval (slowly varying the velocity's module \f$|v|\f$)
+  * such that at the endpoints we leave from the left/right of the region.
+  * Starting with this interval, we perform a bisection procedure until we find 
+  * a correction satisfying the 450d condition.
+  *
+  * \remark For convenience, the state after applying the maneuver 90 days from
+  * now, \f$ q90 + \Delta v\f$, is returned in q90_new.
+  *
+  * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
+  * @param[in]		T			Period of nominal orbit (approximately 180 days)
+  * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
+  *
+  * @returns	dv	Modulus of correction maneuver
+  */
+
+double correction(double q_Masde[DIM], double T, double q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
 	double q90[DIM];	// q90: state after 90 days (pos-vel)
-	double q90_new[DIM];	// q90 after maneuver
 	double v_mod;		// Modulus of velocity vector
 	
 	double tout;	/* exit time */
@@ -146,16 +176,20 @@ double correction(double q_Masde[DIM], double T)
 
 	posmom_to_posvel(q, q90);
 
+	/*
 	fprintf(stderr, "q90: %e %e %e %e %e %e\n", 
-			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]);
+			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]); 
+			*/
 
-	apply_correction(q90, 0.0, &tout, &bLeftA);
+	apply_correction(q90, 0.0, &tout, &bLeftA, q90_new);
 
+	/*
 	fprintf(stderr, "Exit time: %e\n", tout);
 	if(bLeftA)
 		fprintf(stderr, "Exiting through the left\n");
 	else
 		fprintf(stderr, "Exiting through the right\n");
+		*/
 
     if(tout > 2.5*T)
     {
@@ -169,7 +203,7 @@ double correction(double q_Masde[DIM], double T)
     /* Try corrections with positive modulus */
 	for(dv=1.e-7; dv<1.e-3; dv+=1.e-7)
 	{
-		apply_correction(q90, dv, &tout, &bLeftB);
+		apply_correction(q90, dv, &tout, &bLeftB, q90_new);
 
 		if(bLeftB != bLeftA)
 			break;
@@ -181,7 +215,7 @@ double correction(double q_Masde[DIM], double T)
         /* Try corrections with negative modulus */
         for(dv=-1.e-7; dv>-1.e-3; dv-=1.e-7)
         {
-			apply_correction(q90, dv, &tout, &bLeftB);
+			apply_correction(q90, dv, &tout, &bLeftB, q90_new);
 
             if(bLeftB != bLeftA)
                 break;
@@ -189,12 +223,14 @@ double correction(double q_Masde[DIM], double T)
 
     }
 
+	/*
 	fprintf(stderr, "dv: %e\n", dv);
 	fprintf(stderr, "Exit time: %e\n", tout);
 	if(bLeftB)
 		fprintf(stderr, "Exiting through the left\n");
 	else
 		fprintf(stderr, "Exiting through the right\n");
+		*/
 
     if(tout > 2.5*T)	/* No need to apply bisection */
     {
@@ -232,10 +268,12 @@ double correction(double q_Masde[DIM], double T)
     s = gsl_root_fsolver_alloc (Type);
     gsl_root_fsolver_set (s, &F, x_lo, x_hi);
 
+	/*
     printf ("using %s method\n", gsl_root_fsolver_name (s));
 
     printf ("%5s [%13s, %13s] %13s %13s\n", "iter", "lower", "upper", "root",
             "err(est)");
+			*/
 
     do 
     {
@@ -247,13 +285,27 @@ double correction(double q_Masde[DIM], double T)
       lag_r = lag(root, &params);
       status = gsl_root_test_residual (lag_r, 0.1);
 
+	  /*
       if (status == GSL_SUCCESS)
         printf ("Converged:\n");
 
       printf ("%5d [%.11f, %.11f] %.11f %.11f\n",
               iter, x_lo, x_hi, root, lag_r);
+			  */
     }
     while (status == GSL_CONTINUE && iter < max_iter);
 
-	return(root);
+	if(iter == max_iter)	/* Unrecoverable error */
+	{
+		fprintf(stderr, "Maximum number of iterations reached "
+				"in bisection procedure? Exiting.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Correction maneuver has been found */
+	dv = root;
+
+	/* Set q90_new before returning */
+	apply_correction(q90, dv, &tout, &bLeftB, q90_new);
+	return(dv);
 }

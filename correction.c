@@ -29,6 +29,7 @@
 
 #include "int_rtbp.h"			// DIM, int_rtbp_exit
 #include "correction_module.h"	// correction
+#include "utils_module.h"		// dblprint
 
 /** \brief Period of nominal halo orbit. 
  *
@@ -44,7 +45,8 @@ main (int argc, char *argv[])
     0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
     0.0000000000000000E+00};
 
-	double dv;		/* Modulus of the maneuver */
+	double dv;				/* Modulus of the maneuver */
+	double q90_new[DIM];	/* Corrected IC after 90 days */
 
 	// Auxiliary variables
 	int i;
@@ -69,8 +71,11 @@ main (int argc, char *argv[])
 
 	gsl_rng_free(r);
 
-	dv = correction(q_Masde, T);
+	dv = correction(q_Masde, T, q90_new);
 
-	fprintf(stderr, "Accepted maneuver:\n");
-    fprintf(stderr, "dv: %e\n", dv);
+	printf("Accepted maneuver:\n");
+    printf("dv: %e\n", dv);
+    printf("New IC after 90 days: \n");
+	dblprint(q90_new, DIM);
+    printf("\n");
 }

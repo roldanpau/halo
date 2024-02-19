@@ -7,6 +7,7 @@
   *
   */
 
+#include <stdlib.h>				// exit, EXIT_FAILURE
 #include <math.h>				// fabs, M_PI
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_fft_real.h>
@@ -114,14 +115,23 @@ void write_coefs(int N, double A[6][N], double B[6][N])
 
 void read_coefs(int N, double A[6][N], double B[6][N])
 {
+	/* Auxiliary variables */
+	int nItems;
+
 	/* Read coefs from stdin */
 	for(int d=0; d<6; d++)
 	{
 		for (int i = 0; i < N; i++)
 		{
-			fscanf (stdin, "%le %le ", &(A[d][i]), &(B[d][i]));
+			nItems = fscanf (stdin, "%le %le ", &(A[d][i]), &(B[d][i]));
+			if(nItems != 2)
+			{
+				fprintf(stderr, "Error reading coefficients of trig series "
+						"from stdin\n");
+				exit(EXIT_FAILURE);
+			}
 		}
-		fscanf(stdin, "\n");
+		nItems = fscanf(stdin, "\n");
 	}
 }
 
