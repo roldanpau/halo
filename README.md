@@ -24,13 +24,21 @@ you will need to install the GNU Scientific Library (GSL).
 * Download code to any directory and type `make` to build C programs.
 * `make clean` to clean up C objects and binaries.
 
-### Executing program
+### Executing programs
 
-* This project consists of several different python programs, e.g. `halo.py`,
-etc. They are run from the command line. They usually accept arguments on the
-command line, and output results to stdout, e.g.
+* This project consists of several different programs, some written in C and
+  some in python. They are run from the command line. They usually accept
+  arguments on the command line, and output results to stdout. 
+* Python programs: 
 ```
 python halo.py
+```
+* C programs:
+```
+./fft orbit.dat > coefs.dat
+./reward < coefs.dat
+./correction
+./shadowing
 ```
 
 ## Help
@@ -50,15 +58,15 @@ Contributors names and contact info
 Pablo Roldan
 [@roldanpau](https://www.linkedin.com/in/pauroldan/)
 
+<!---
 ## Version History
 
-<!---
 * 0.2
     * Various bug fixes and optimizations
     * See [commit change]() or See [release history]()
--->
 * 0.1
     * Initial Release
+-->
 
 ## License
 
