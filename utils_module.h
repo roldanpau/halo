@@ -46,4 +46,4 @@ double WrapPosNegPI(double fAng);
   */
 double WrapTwoPI(double fAng);
 
-double norm(int n, double v[n]);
+double norm(int n, double v[const]);

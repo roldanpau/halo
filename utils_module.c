@@ -56,7 +56,7 @@ double WrapTwoPI(double fAng)
  *
  * @returns			Euclidean norm of vector
  */
-double norm(int n, double v[n])
+double norm(int n, double v[const])
 {
 	double res = 0;
 	for(int i=0; i<n; i++)

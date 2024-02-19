@@ -12,12 +12,7 @@
 #include <math.h>	//sqrt
 
 #include "rk78.h"
-
-/* routine rtbp below must "see" this value */
-static double mu = 3.040357143000000E-06; 
-
-/** \brief Dimension of the RTBP. */
-static const size_t DIM = 6;
+#include "int_rtbp.h"	/* mu, DIM */
 
 /** 
   * \brief Integrate trajectory of the RTBP.
@@ -77,6 +72,7 @@ int int_rtbp(double total_time, double *x, double tol, double hmin, double
   * Point Orbit region of the Sun-Earth RTBP.
   *
   * @param[inout]   x				On entry, it contains i.c. On exit, f.c.
+  * (pos-mom coordinates)
   * @param[in]		tol				Tolerance to integration error.
   * @param[in]		hmin			Minimum step size.
   * @param[in]		hmax			Maximum step size.
