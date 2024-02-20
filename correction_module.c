@@ -90,7 +90,7 @@ struct lag_params
   * time tout.
   *
   * Given a maneuver of magnitude dv, this function returns 
-  * \f\[ \min\{ 2.5T - tout, 0} \f\]
+  * \f\[ \min\{ 2.5T - tout, 0\} \f\]
   * multiplied by -1 (if we exit through the left) or by 1 (if we exit through
   * the right. 
   *
@@ -101,7 +101,7 @@ struct lag_params
   * @param[in]      dv	    Magnitude of the maneuver (may be negative)
   * @param[in]      params	Parameters needed for this function (q90).
   *
-  * @returns        lag \f$ \min\{ 2.5T - tout, 0} \f$
+  * @returns        lag \f$ \min\{ 2.5T - tout, 0\} \f$
   */
 
 double lag(double dv, void *params)
