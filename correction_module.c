@@ -5,14 +5,15 @@
   * orbit, find a (tiny) correction 90 days from now that ensures we stay on
   * the LPO region up to 450 more days, effectively shadowing the halo.
   *
-  * The correction can be found in several ways. We start using a bisection
-  * method: Find an interval (slowly varying the velocity's module \f$|v|\f$)
-  * such that at the endpoints we leave from the left/right of the region.
-  * Starting with this interval, we perform a bisection procedure until we find 
-  * a correction satisfying the 450d condition.
+  * The correction can be found in several ways, depending on the flag
+  * correction_t: 
   *
-  * NOTES: 
-  *	
+  * CORRECTION_VEL: apply a maneuver in the direction of the velocity vector
+  * (vx,vy,vz).
+  * 
+  * CORRECTION_ST: apply a maneuver in the direction of the stable direction
+  * \f$ E^s \f$.
+  *
   * USED BY: correction.c	
   *
   */
@@ -23,21 +24,24 @@
 #include "int_rtbp.h"			// DIM, int_rtbp_exit
 #include "cv_module.h"			// posvel_to_posmom
 #include "utils_module.h"		// norm, dblcpy
+#include "correction_module.h"	// correction_t
 
 /**
   * \brief Apply correction dv to q90 and integrate trajectory until exiting LPO region.
   *
   * This function integrates the initial condition \f$
-  * q_{90}=(x,y,z,v_x,v_y,v_z) \f$ after applying the maneuver \f$ \Delta v =
-  * \delta v*(v_x, v_y, v_z)/|(v_x, v_y, v_z)| \f$ until exiting the LPO
-  * region, and returns the integration time and whether it exits trough the
-  * left or the right of the region.
+  * q_{90}=(x,y,z,v_x,v_y,v_z) \f$ after applying the maneuver until exiting
+  * the LPO region, and returns the integration time and whether it exits
+  * trough the left or the right of the region.
+  *
+  * The type of correction maneuver is specified through flag `correction'.
   *
   * \remark For convenience, the IC after applying the maneuver, \f$ q90 +
   * \Delta v\f$, is returned in q90_new.
   *
   * @param[in]		q90         I.c.  (pos-vel coordinates)
   * @param[in]      dv			Magnitude of the maneuver (may be negative)
+  * @param[in]      correction	Type of correction maneuver
   * @param[out]     tout        Exit time
   * @param[out]     bLeft       Flag to specify if orbit leaves through
   * left region (bLeft = true) or right region (bLeft = false).
@@ -45,28 +49,50 @@
   *
   * \return     Currently, simply returns 0 (no error control).
   */
-int apply_correction(double q90[DIM], double dv, double *tout, int *bLeft,
-		double q90_new[DIM])
+int apply_correction(double q90[DIM], double dv, correction_t correction,
+		double *tout, int *bLeft, double q90_new[DIM])
 {
+	double Dv[3];	/* Maneuver (in the direction of current velocity or stable
+					   direction, depending on correction flag) */
+
+	/* Auxiliary variables */
 	double q[DIM];		// q is a point in the orbit (pos-mom)
-	double v_mod;		// Modulus of velocity vector
-	
-	double Dv[3];	/* Maneuver (in the direction of current velocity) */
 
-	v_mod = norm(3,&q90[3]);	// modulus of velocity vector
+	dblcpy(q90_new, q90, DIM);
 
-    dblcpy(q90_new, q90, DIM);
+	if(correction == CORRECTION_VEL)
+	{
+		double v_mod = norm(3,&q90[3]);		// Modulus of velocity vector
+		
+		/* Set maneuver to dv*(vx, vy, vz), where (vx, vy, vz) is a unitary
+		 * vector tangent to current velocity */
+		Dv[0] = dv*q90[3]/v_mod;
+		Dv[1] = dv*q90[4]/v_mod;
+		Dv[2] = dv*q90[5]/v_mod;
 
-    /* Set maneuver to dv*(vx, vy, vz), where (vx, vy, vz) is a unitary
-     * vector tangent to current velocity */
-    Dv[0] = dv*q90[3]/v_mod;
-    Dv[1] = dv*q90[4]/v_mod;
-    Dv[2] = dv*q90[5]/v_mod;
+		/* Apply maneuver to q90 */
+		q90_new[3] += Dv[0];
+		q90_new[4] += Dv[1];
+		q90_new[5] += Dv[2];
+	}
+	else if(correction == CORRECTION_ST)
+	{
+		/* w = stable direction */
+		/* Masde says: Take only first 3 (position) components */
+		double w[3] = {0.323988273471917, 0.173290594261497, 0};
 
-    /* Apply maneuver to q90 */
-    q90_new[3] += Dv[0];
-    q90_new[4] += Dv[1];
-    q90_new[5] += Dv[2];
+		double w_mod = norm(3,w);		// Modulus of stable direction
+		
+		/* Set maneuver to dv*w, where w is the unitary stable dir */
+		Dv[0] = dv*w[0]/w_mod;
+		Dv[1] = dv*w[1]/w_mod;
+		Dv[2] = dv*w[2]/w_mod;
+
+		/* Apply maneuver to q90 */
+		q90_new[0] += Dv[0];
+		q90_new[1] += Dv[1];
+		q90_new[2] += Dv[2];
+	}
 
     /* My vectorfield expects the order x,px,y,py,z,pz. */
     posvel_to_posmom(q90_new, q);
@@ -76,13 +102,14 @@ int apply_correction(double q90[DIM], double dv, double *tout, int *bLeft,
     int_rtbp_exit(q, 1.e-14, 1.e-5, 1.e-1, 0, tout, bLeft);
 }
 
-/** \enum lag_params
+/** \struct lag_params
   * \brief Parameters to function "lag"
   */
 struct lag_params 
 {
     double q90[6];  ///< state after 90 days (pos-vel)
 	double T;		///< period of nominal periodic orbit (= 180 days aprox)
+	correction_t correction;	///< type of correction maneuver
 };
 
 /**
@@ -99,7 +126,7 @@ struct lag_params
   * (see correction.c).
   *
   * @param[in]      dv	    Magnitude of the maneuver (may be negative)
-  * @param[in]      params	Parameters needed for this function (q90).
+  * @param[in]      params	Parameters needed for this function.
   *
   * @returns        lag \f$ \min\{ 2.5T - tout, 0\} \f$
   */
@@ -119,7 +146,7 @@ double lag(double dv, void *params)
 
 	T = p->T;
 
-    apply_correction(p->q90, dv, &tout, &bLeft, q90_new);
+    apply_correction(p->q90, dv, p->correction, &tout, &bLeft, q90_new);
     if(tout > 2.5*T)
 		lag=0;  /* We found a zero! */
     else 
@@ -150,12 +177,14 @@ double lag(double dv, void *params)
   *
   * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
   * @param[in]		T			Period of nominal orbit (approximately 180 days)
+  * @param[in]      corr   		Type of correction maneuver
   * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
   *
   * @returns	dv	Modulus of correction maneuver
   */
 
-double correction(double q_Masde[DIM], double T, double q90_new[DIM])
+double correction(double q_Masde[DIM], double T, correction_t corr, double
+		q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
 	double q90[DIM];	// q90: state after 90 days (pos-vel)
@@ -165,7 +194,6 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
 	int bLeftA;	/* Do we leave through the left or right? (endpoint A) */
 	int bLeftB;	/* Do we leave through the left or right? (endpoint B) */
 
-	double Dv[3];	/* Maneuver (in the direction of current velocity) */
 	double dv;		/* Modulus of the maneuver */
 
 	/* My vectorfield expects the order x,px,y,py,z,pz. */
@@ -181,7 +209,7 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
 			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]); 
 			*/
 
-	apply_correction(q90, 0.0, &tout, &bLeftA, q90_new);
+	apply_correction(q90, 0.0, corr, &tout, &bLeftA, q90_new);
 
 	/*
 	fprintf(stderr, "Exit time: %e\n", tout);
@@ -203,7 +231,7 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
     /* Try corrections with positive modulus */
 	for(dv=1.e-7; dv<1.e-3; dv+=1.e-7)
 	{
-		apply_correction(q90, dv, &tout, &bLeftB, q90_new);
+		apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
 
 		if(bLeftB != bLeftA)
 			break;
@@ -215,7 +243,7 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
         /* Try corrections with negative modulus */
         for(dv=-1.e-7; dv>-1.e-3; dv-=1.e-7)
         {
-			apply_correction(q90, dv, &tout, &bLeftB, q90_new);
+			apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
 
             if(bLeftB != bLeftA)
                 break;
@@ -260,6 +288,7 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
 
     dblcpy(params.q90, q90, DIM);
 	params.T = T;
+	params.correction = corr;
 
     F.function = &lag;
     F.params = &params;
@@ -306,6 +335,6 @@ double correction(double q_Masde[DIM], double T, double q90_new[DIM])
 	dv = root;
 
 	/* Set q90_new before returning */
-	apply_correction(q90, dv, &tout, &bLeftB, q90_new);
+	apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
 	return(dv);
 }

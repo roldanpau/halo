@@ -47,9 +47,13 @@ main (int argc, char *argv[])
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
-		dv = correction(X1, T, X2);
+		dv = correction(X1, T, CORRECTION_VEL, X2);
 
-		printf("Accepted maneuver dv: %e\n", dv);
+		fprintf(stderr, "CORRECTION_VEL Accepted maneuver dv: %e\n", dv);
+
+		dv = correction(X1, T, CORRECTION_ST, X2);
+
+		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
 
 		printf("New IC after 90 days: \n");
 		dblprint(X2, DIM);
