@@ -55,12 +55,12 @@ main (int argc, char *argv[])
 
 		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
 
-		printf("New IC after 90 days: \n");
+		printf("New IC after 69 days: \n");
 		dblprint(X2, DIM);
 		printf("\n\n");
 
 		dblcpy(X1, X2, DIM);
 
-		time += 0.5*T;
+		time += GOLDEN_FRACT*T;
 	}
 }
