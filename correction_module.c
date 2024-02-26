@@ -89,9 +89,9 @@ int apply_correction(double q90[DIM], double dv, correction_t correction,
 		Dv[2] = dv*w[2]/w_mod;
 
 		/* Apply maneuver to q90 */
-		q90_new[0] += Dv[0];
-		q90_new[1] += Dv[1];
-		q90_new[2] += Dv[2];
+		q90_new[3] += Dv[0];
+		q90_new[4] += Dv[1];
+		q90_new[5] += Dv[2];
 	}
 
     /* My vectorfield expects the order x,px,y,py,z,pz. */
