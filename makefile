@@ -1,4 +1,4 @@
-progs = fft reward correction shadowing
+progs = fft reward correction shadowing table
 
 OBJS = rk78.o int_rtbp.o fft_module.o utils_module.o cv_module.o \
 	   correction_module.o
@@ -22,6 +22,8 @@ reward: rk78.o int_rtbp.o fft_module.o utils_module.o
 correction: rk78.o int_rtbp.o utils_module.o cv_module.o correction_module.o
 
 shadowing: rk78.o int_rtbp.o utils_module.o cv_module.o correction_module.o
+
+table: rk78.o int_rtbp.o utils_module.o cv_module.o correction_module.o
 
 clean:
 	rm libhalo.so $(OBJS) $(progs)

@@ -178,16 +178,16 @@ double lag(double dv, void *params)
   * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
   * @param[in]		T			Period of nominal orbit (approximately 180 days)
   * @param[in]      corr   		Type of correction maneuver
+  * @param[out]		q90         State after 90 days (pos-vel)
   * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
   *
   * @returns	dv	Modulus of correction maneuver
   */
 
-double correction(double q_Masde[DIM], double T, correction_t corr, double
-		q90_new[DIM])
+double correction(double q_Masde[DIM], double T, correction_t corr, 
+		double q90[DIM], double q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
-	double q90[DIM];	// q90: state after 90 days (pos-vel)
 	double v_mod;		// Modulus of velocity vector
 	
 	double tout;	/* exit time */
@@ -221,7 +221,7 @@ double correction(double q_Masde[DIM], double T, correction_t corr, double
 
     if(tout > 2.5*T)
     {
-        fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
+        //fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
 		return(0);
     }
 
@@ -262,7 +262,7 @@ double correction(double q_Masde[DIM], double T, correction_t corr, double
 
     if(tout > 2.5*T)	/* No need to apply bisection */
     {
-        fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
+        //fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
 		return(dv);
     }
 

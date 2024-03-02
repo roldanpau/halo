@@ -15,5 +15,5 @@ static const double GOLDEN_FRACT = 0.381966;	///< Fraction of a circle occupied 
 typedef enum {CORRECTION_VEL, CORRECTION_ST} correction_t;
 
 double lag(double dv, void *params);
-double correction(double q_Masde[DIM], double T, correction_t correct, double
-		q90_new[DIM]);
+double correction(double q_Masde[DIM], double T, correction_t corr, 
+		double q90[DIM], double q90_new[DIM]);

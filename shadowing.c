@@ -38,6 +38,7 @@ main (int argc, char *argv[])
     0.0000000000000000E+00};
 
 	double dv;				/* Modulus of the maneuver */
+	double q90[DIM];		/* State after 90 days */
 	double X2[DIM];			/* Corrected IC after 90 days */
 
 	printf("IC: \n");
@@ -47,11 +48,11 @@ main (int argc, char *argv[])
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
-		dv = correction(X1, T, CORRECTION_VEL, X2);
+		dv = correction(X1, T, CORRECTION_VEL, q90, X2);
 
 		fprintf(stderr, "CORRECTION_VEL Accepted maneuver dv: %e\n", dv);
 
-		dv = correction(X1, T, CORRECTION_ST, X2);
+		dv = correction(X1, T, CORRECTION_ST, q90, X2);
 
 		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
 

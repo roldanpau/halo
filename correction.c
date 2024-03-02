@@ -46,6 +46,7 @@ main (int argc, char *argv[])
     0.0000000000000000E+00};
 
 	double dv;				/* Modulus of the maneuver */
+	double q90[DIM];		/* State after 90 days */
 	double q90_new[DIM];	/* Corrected IC after 90 days */
 
 	// Auxiliary variables
@@ -71,7 +72,7 @@ main (int argc, char *argv[])
 
 	gsl_rng_free(r);
 
-	dv = correction(q_Masde, T, CORRECTION_ST, q90_new);
+	dv = correction(q_Masde, T, CORRECTION_ST, q90, q90_new);
 
 	printf("Accepted maneuver:\n");
     printf("dv: %e\n", dv);
