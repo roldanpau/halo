@@ -1,3 +1,5 @@
+static const double GOLDEN_FRACT = 0.381966;	///< Fraction of a circle occupied by the golden angle
+	
 /** \enum correction_t
   * \brief Types of correction maneuver.
   *

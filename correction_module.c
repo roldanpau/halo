@@ -199,8 +199,8 @@ double correction(double q_Masde[DIM], double T, correction_t corr, double
 	/* My vectorfield expects the order x,px,y,py,z,pz. */
 	posvel_to_posmom(q_Masde, q);
 
-	/* Integrate orbit for 90 days, or approximately half the period */
-	int_rtbp(0.5*T, q, 1.e-15, 1.e-5, 1.e-1, 0);
+	/* Integrate orbit for GOLDEN_FRACT*T time, approximately 69 days */
+	int_rtbp(GOLDEN_FRACT*T, q, 1.e-15, 1.e-5, 1.e-1, 0);
 
 	posmom_to_posvel(q, q90);
 
