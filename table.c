@@ -29,8 +29,11 @@
  */
 static const double T = 0.3059226605957322E+01;
 
+static const double CORREC_TIME = 3*GOLDEN_FRACT*T;
+static const double SHADOW_TIME = 2.5*T;
+
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)
-static const double twentyYrs = 80*2*M_PI;	///< 20 yrs (in normalized units)
+static const double twentyYrs = 200*2*M_PI;	///< 200 yrs (in normalized units)
 
 int
 main (int argc, char *argv[])
@@ -50,14 +53,14 @@ main (int argc, char *argv[])
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
-		//dv_vel = correction(X1, T, CORRECTION_VEL, q90, X2);
-		dv_st = correction(X1, T, CORRECTION_ST, q90, X2);
+		//dv_vel = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
+		dv_st = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
 
 		printf("%e,%e,%e,%e,%e,%e,%e,%e\n", time, q90[0], q90[1], q90[2],
 				q90[3], q90[4], q90[5], dv_st);
 
 		dblcpy(X1, X2, DIM);
 
-		time += GOLDEN_FRACT*T;
+		time += CORREC_TIME;
 	}
 }

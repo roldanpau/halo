@@ -1,9 +1,11 @@
 /** \file correction_module.c
-  * \brief Given an IC close to the halo, find a small correction after 90d that ensures it remains inside the LPO region.
+  * \brief Given an IC close to the halo, find a small correction after
+  * CORREC_TIME (usually 90 days) that ensures it remains inside the LPO region.
   *
   * Given an initial condition that is very close to the nominal halo periodic
-  * orbit, find a (tiny) correction 90 days from now that ensures we stay on
-  * the LPO region up to 450 more days, effectively shadowing the halo.
+  * orbit, find a (tiny) correction CORREC_TIME from now that ensures we stay
+  * on the LPO region up to SHADOW_TIME more time, effectively shadowing the
+  * halo.
   *
   * The correction can be found in several ways, depending on the flag
   * correction_t: 
@@ -108,34 +110,36 @@ int apply_correction(double q90[DIM], double dv, correction_t correction,
 struct lag_params 
 {
     double q90[6];  ///< state after 90 days (pos-vel)
-	double T;		///< period of nominal periodic orbit (= 180 days aprox)
+	double CORREC_TIME;		///< maneuver is applied after CORREC_TIME
+	double SHADOW_TIME;		///< maneuver keeps orbit shadowing halo for SHADOW_TIME extra time
 	correction_t correction;	///< type of correction maneuver
 };
 
 /**
-  * \brief Measure the difference (`lag') between 450 days (=2.5T) and our exit
+  * \brief Measure the difference (`lag') between SHADOW_TIME and our exit
   * time tout.
   *
   * Given a maneuver of magnitude dv, this function returns 
-  * \f\[ \min\{ 2.5T - tout, 0\} \f\]
+  * \f\[ \min\{ SHADOW_TIME - tout, 0\} \f\]
   * multiplied by -1 (if we exit through the left) or by 1 (if we exit through
   * the right. 
   *
   * Zeros of this function correspond to maneuvers dv that lead to an exit time
-  * tout greater than 2.5T. This function is used in the bisection procedure
+  * tout greater than SHADOW_TIME. This function is used in the bisection procedure
   * (see correction.c).
   *
   * @param[in]      dv	    Magnitude of the maneuver (may be negative)
   * @param[in]      params	Parameters needed for this function.
   *
-  * @returns        lag \f$ \min\{ 2.5T - tout, 0\} \f$
+  * @returns        lag \f$ \min\{ SHADOW_TIME - tout, 0\} \f$
   */
 
 double lag(double dv, void *params)
 {
     struct lag_params *p = (struct lag_params *)params;
 
-	double T;		/* period of nominal periodic orbit */
+	double CORREC_TIME;
+	double SHADOW_TIME;
 	double tout;	/* exit time */
 	int bLeft;		/* Do we leave through the left or right? */
 
@@ -144,48 +148,56 @@ double lag(double dv, void *params)
 	// auxiliary variables
 	double q90_new[DIM];
 
-	T = p->T;
+	CORREC_TIME = p->CORREC_TIME;
+	SHADOW_TIME = p->SHADOW_TIME;
 
     apply_correction(p->q90, dv, p->correction, &tout, &bLeft, q90_new);
-    if(tout > 2.5*T)
+    if(tout > SHADOW_TIME)
 		lag=0;  /* We found a zero! */
     else 
     {
         if(bLeft) 
-			lag=-(2.5*T - tout);
+			lag=-(SHADOW_TIME - tout);
         else
-			lag=2.5*T - tout;
+			lag=SHADOW_TIME - tout;
     }
 	return(lag);
 }
 
 /**
-  * \brief Given an IC close to the halo, find a small correction after 90d that ensures it remains inside the LPO region.
+  * \brief Given an IC close to the halo, find a small correction after
+  * CORREC_TIME (usually 90 days) that ensures it remains inside the LPO
+  * region.
   *
   * Given an initial condition that is very close to the nominal halo periodic
-  * orbit, find a (tiny) correction 90 days from now that ensures we stay on
-  * the LPO region up to 450 more days, effectively shadowing the halo.
+  * orbit, find a (tiny) correction CORREC_TIME from now that ensures we stay
+  * on the LPO region up to SHADOW_TIME more time, effectively shadowing the
+  * halo.
   *
   * The correction can be found in several ways. We start using a bisection
   * method: Find an interval (slowly varying the velocity's module \f$|v|\f$)
   * such that at the endpoints we leave from the left/right of the region.
   * Starting with this interval, we perform a bisection procedure until we find 
-  * a correction satisfying the 450d condition.
+  * a correction satisfying the SHADOW_TIME condition.
   *
-  * \remark For convenience, the state after applying the maneuver 90 days from
-  * now, \f$ q90 + \Delta v\f$, is returned in q90_new.
+  * \remark For convenience, the state after applying the maneuver CORREC_TIME
+  * from now, \f$ q90 + \Delta v\f$, is returned in q90_new.
   *
   * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
-  * @param[in]		T			Period of nominal orbit (approximately 180 days)
+  *
+  * @param[in]		CORREC_TIME		Apply correction after CORREC_TIME time
+  * @param[in]		SHADOW_TIME		Extra time (after CORREC_TIME) we must
+  * ensure we stay shadowing the halo.
+  *
   * @param[in]      corr   		Type of correction maneuver
-  * @param[out]		q90         State after 90 days (pos-vel)
+  * @param[out]		q90         State after CORREC_TIME (pos-vel)
   * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
   *
   * @returns	dv	Modulus of correction maneuver
   */
 
-double correction(double q_Masde[DIM], double T, correction_t corr, 
-		double q90[DIM], double q90_new[DIM])
+double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
+		correction_t corr, double q90[DIM], double q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
 	double v_mod;		// Modulus of velocity vector
@@ -200,7 +212,7 @@ double correction(double q_Masde[DIM], double T, correction_t corr,
 	posvel_to_posmom(q_Masde, q);
 
 	/* Integrate orbit for GOLDEN_FRACT*T time, approximately 69 days */
-	int_rtbp(GOLDEN_FRACT*T, q, 1.e-15, 1.e-5, 1.e-1, 0);
+	int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
 
 	posmom_to_posvel(q, q90);
 
@@ -219,7 +231,7 @@ double correction(double q_Masde[DIM], double T, correction_t corr,
 		fprintf(stderr, "Exiting through the right\n");
 		*/
 
-    if(tout > 2.5*T)
+    if(tout > SHADOW_TIME)
     {
         //fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
 		return(0);
@@ -260,7 +272,7 @@ double correction(double q_Masde[DIM], double T, correction_t corr,
 		fprintf(stderr, "Exiting through the right\n");
 		*/
 
-    if(tout > 2.5*T)	/* No need to apply bisection */
+    if(tout > SHADOW_TIME)	/* No need to apply bisection */
     {
         //fprintf(stderr, "We stay in LPO region longer than 450 days! OK!\n");
 		return(dv);
@@ -287,7 +299,8 @@ double correction(double q_Masde[DIM], double T, correction_t corr,
     double lag_r;   /* lag for the current root */
 
     dblcpy(params.q90, q90, DIM);
-	params.T = T;
+	params.CORREC_TIME = CORREC_TIME;
+	params.SHADOW_TIME = SHADOW_TIME;
 	params.correction = corr;
 
     F.function = &lag;

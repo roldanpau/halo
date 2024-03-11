@@ -1,8 +1,8 @@
 /** \file shadowing.c
   * \brief Construct a trajectory that ``shadows'' an LPO orbit.
   *
-  * Construct a trajectory that ``shadows'' an LPO orbit by making tiny
-  * adjustments in velocity every 90 days.
+  * Construct a trajectory that ``shadows'' an LPO orbit for 20 years by making
+  * tiny adjustments in velocity every 90 days.
   *
   * We extend the time interval within the LPO region by applying the procedure
   * described in [Masdemont et al., Global analysis of direct transfers...,
@@ -45,14 +45,17 @@ main (int argc, char *argv[])
 	dblprint(X1, DIM);
 	printf("\n");
 
+	double CORREC_TIME = GOLDEN_FRACT*T;
+	double SHADOW_TIME = 2.5*T;
+
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
-		dv = correction(X1, T, CORRECTION_VEL, q90, X2);
+		dv = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
 
 		fprintf(stderr, "CORRECTION_VEL Accepted maneuver dv: %e\n", dv);
 
-		dv = correction(X1, T, CORRECTION_ST, q90, X2);
+		dv = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
 
 		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
 
@@ -62,6 +65,6 @@ main (int argc, char *argv[])
 
 		dblcpy(X1, X2, DIM);
 
-		time += GOLDEN_FRACT*T;
+		time += CORREC_TIME;
 	}
 }

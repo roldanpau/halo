@@ -72,7 +72,7 @@ main (int argc, char *argv[])
 
 	gsl_rng_free(r);
 
-	dv = correction(q_Masde, T, CORRECTION_ST, q90, q90_new);
+	dv = correction(q_Masde, 0.5*T, 2.5*T, CORRECTION_ST, q90, q90_new);
 
 	printf("Accepted maneuver:\n");
     printf("dv: %e\n", dv);
