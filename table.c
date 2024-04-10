@@ -33,7 +33,7 @@ static const double CORREC_TIME = 3*GOLDEN_FRACT*T;
 static const double SHADOW_TIME = 2.5*T;
 
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)
-static const double twentyYrs = 200*2*M_PI;	///< 200 yrs (in normalized units)
+static const double twentyYrs = 600*2*M_PI;	///< 600 yrs (in normalized units)
 
 int
 main (int argc, char *argv[])
