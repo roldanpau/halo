@@ -1,4 +1,5 @@
 doc/
 papers/
 __pycache__/
+my_dir/
 .ipynb_checkpoints/
