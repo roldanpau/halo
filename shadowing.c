@@ -4,10 +4,10 @@
   * Construct a trajectory that ``shadows'' an LPO orbit for 20 years by making
   * tiny adjustments in velocity every 90 days.
   *
-  * We extend the time interval within the LPO region by applying the procedure
-  * described in [Masdemont et al., Global analysis of direct transfers...,
-  * 2021], Section 3.3. This correction procedure is implemented in
-  * correction_module.c
+  * We extend the time interval within the LPO region by applying a procedure
+  * similar to that described in [Masdemont et al., Global analysis of direct
+  * transfers..., 2021], Section 3.3. This correction procedure is implemented
+  * in correction_module.c
   *
   * USAGE:	./shadowing
   *
@@ -18,7 +18,7 @@
 #include <math.h>				// M_PI
 
 #include "int_rtbp.h"			// DIM
-#include "correction_module.h"	// correction
+#include "correction_module.h"	// correction, correction_opt
 #include "utils_module.h"		// dblprint
 
 /** \brief Period of nominal halo orbit. 
@@ -45,12 +45,13 @@ main (int argc, char *argv[])
 	dblprint(X1, DIM);
 	printf("\n");
 
-	double CORREC_TIME = GOLDEN_FRACT*T;
-	double SHADOW_TIME = 2.5*T;
+	double CORREC_TIME = 2*GOLDEN_FRACT*T;
+	double SHADOW_TIME = 3*T;
 
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
+		/*
 		dv = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
 
 		fprintf(stderr, "CORRECTION_VEL Accepted maneuver dv: %e\n", dv);
@@ -58,6 +59,13 @@ main (int argc, char *argv[])
 		dv = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
 
 		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
+		*/
+
+		dv = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90,
+				X2);
+
+		fprintf(stderr, "OPTIMAL CORRECTION_ST  Accepted maneuver dv: %e\n\n",
+				dv);
 
 		printf("New IC after 69 days: \n");
 		dblprint(X2, DIM);

@@ -17,3 +17,7 @@ typedef enum {CORRECTION_VEL, CORRECTION_ST} correction_t;
 double lag(double dv, void *params);
 double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
 		correction_t corr, double q90[DIM], double q90_new[DIM]);
+
+double tout(double dv, void *params);
+double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
+		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM]);

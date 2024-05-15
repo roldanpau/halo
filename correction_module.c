@@ -10,10 +10,10 @@
   * The correction can be found in several ways, depending on the flag
   * correction_t: 
   *
-  * CORRECTION_VEL: apply a maneuver in the direction of the velocity vector
+  * CORRECTION_VEL: apply a maneuver in the direction of the VELocity vector
   * (vx,vy,vz).
   * 
-  * CORRECTION_ST: apply a maneuver in the direction of the stable direction
+  * CORRECTION_ST: apply a maneuver in the direction of the STable direction
   * \f$ E^s \f$.
   *
   * USED BY: correction.c	
@@ -21,6 +21,7 @@
   */
 
 #include <stdlib.h>				// exit
+#include <assert.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include "int_rtbp.h"			// DIM, int_rtbp_exit
@@ -125,8 +126,8 @@ struct lag_params
   * the right. 
   *
   * Zeros of this function correspond to maneuvers dv that lead to an exit time
-  * tout greater than SHADOW_TIME. This function is used in the bisection procedure
-  * (see correction.c).
+  * tout greater than SHADOW_TIME. This function is used in the bisection
+  * procedure (see function correction()).
   *
   * @param[in]      dv	    Magnitude of the maneuver (may be negative)
   * @param[in]      params	Parameters needed for this function.
@@ -221,6 +222,8 @@ double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
 			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]); 
 			*/
 
+	/* Find out which side (left/right) we are exiting when using maneuver dv=0
+	 * */
 	apply_correction(q90, 0.0, corr, &tout, &bLeftA, q90_new);
 
 	/*
@@ -349,5 +352,244 @@ double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
 
 	/* Set q90_new before returning */
 	apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+	return(dv);
+}
+
+/** \struct tout_params
+  * \brief Parameters to function "tout"
+  */
+struct tout_params 
+{
+    double q90[6];  ///< state after 90 days (pos-vel)
+	double CORREC_TIME;		///< maneuver is applied after CORREC_TIME
+	correction_t correction;	///< type of correction maneuver
+};
+
+/**
+  * \brief Measure (the inverse of) our exit time tout.
+  *
+  * Given a maneuver of magnitude dv, this function returns 
+  * \f\[ \frac{1}{tout} \f\]
+  * multiplied by -1 (if we exit through the left) or by 1 (if we exit through
+  * the right. 
+  *
+  * Zeros of this function correspond to maneuvers dv that lead to an infinite
+  * exit time tout. This function is used in the optimal bisection procedure
+  * (see function correction_opt()).
+  *
+  * @param[in]      dv	    Magnitude of the maneuver (may be negative)
+  * @param[in]      params	Parameters needed for this function.
+  *
+  * @returns        \f$ \frac{1}{tout} \f$
+  */
+
+double tout_f(double dv, void *params)
+{
+    struct tout_params*p = (struct tout_params *)params;
+
+	double CORREC_TIME;
+	double tout;	/* exit time */
+	int bLeft;		/* Do we leave through the left or right? */
+
+	double ret;		/* return value */
+
+	// auxiliary variables
+	double q90_new[DIM];
+
+	CORREC_TIME = p->CORREC_TIME;
+
+    apply_correction(p->q90, dv, p->correction, &tout, &bLeft, q90_new);
+
+	if(bLeft) 
+		ret = -1.0/tout;
+	else
+		ret = 1.0/tout;
+
+	return(ret);
+}
+
+/**
+  * \brief Given an IC close to the halo, find a small correction after
+  * CORREC_TIME (usually 90 days) that ensures it remains inside the LPO
+  * region.
+  *
+  * Given an initial condition that is very close to the nominal halo periodic
+  * orbit, find a (tiny) correction CORREC_TIME from now that ensures we stay
+  * on the LPO region for as long as possible, effectively shadowing the halo.
+  *
+  * We use a bisection method: Find an interval (slowly varying the velocity's
+  * module \f$|v|\f$) such that at the endpoints we leave from the left/right
+  * of the region.
+  * Starting with this interval, we perform a bisection procedure until we find
+  * the optimal correction that stays in the LPO region for as long as
+  * possible.
+  *
+  * In practice, to find the optimal one, we iterate the bisection procedure
+  * until the interval \f$ [dv_-, dv_+] \f$ is practically zero length.
+  *
+  * \remark For convenience, the state after applying the maneuver CORREC_TIME
+  * from now, \f$ q90 + \Delta v\f$, is returned in q90_new.
+  *
+  * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
+  *
+  * @param[in]		CORREC_TIME		Apply correction after CORREC_TIME time
+  * @param[in]		SHADOW_TIME		Extra time (after CORREC_TIME) we must
+  * ensure we stay shadowing the halo.
+  *
+  * @param[in]      corr   		Type of correction maneuver
+  * @param[out]		q90         State after CORREC_TIME (pos-vel)
+  * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
+  *
+  * @returns	dv	Modulus of correction maneuver
+  */
+
+double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
+		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM])
+{
+	double q[DIM];		// q is a point in the orbit (pos-mom)
+	double v_mod;		// Modulus of velocity vector
+	
+	double tout;	/* exit time */
+	int bLeftA;	/* Do we leave through the left or right? (endpoint A) */
+	int bLeftB;	/* Do we leave through the left or right? (endpoint B) */
+
+	double dv;		/* Modulus of the maneuver */
+
+	/* My vectorfield expects the order x,px,y,py,z,pz. */
+	posvel_to_posmom(q_Masde, q);
+
+	/* Integrate orbit for GOLDEN_FRACT*T time, approximately 69 days */
+	int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
+
+	posmom_to_posvel(q, q90);
+
+	/*
+	fprintf(stderr, "q90: %e %e %e %e %e %e\n", 
+			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]); 
+			*/
+
+	/* Find out which side (left/right) we are exiting when using maneuver dv=0
+	 * */
+	apply_correction(q90, 0.0, corr, &tout, &bLeftA, q90_new);
+
+	/*
+	fprintf(stderr, "Exit time: %e\n", tout);
+	if(bLeftA)
+		fprintf(stderr, "Exiting through the left\n");
+	else
+		fprintf(stderr, "Exiting through the right\n");
+		*/
+
+	/* A correction maneuver is always applied */
+
+    /* Try corrections with positive modulus */
+	for(dv=1.e-7; dv<1.e-3; dv+=1.e-7)
+	{
+		apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+
+		if(bLeftB != bLeftA)
+			break;
+	}
+
+    if(bLeftB == bLeftA)   
+    /* Could not find endpoint exiting through the other side */
+    {
+        /* Try corrections with negative modulus */
+        for(dv=-1.e-7; dv>-1.e-3; dv-=1.e-7)
+        {
+			apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+
+            if(bLeftB != bLeftA)
+                break;
+        }
+
+    }
+
+	/*
+	fprintf(stderr, "dv: %e\n", dv);
+	fprintf(stderr, "Exit time: %e\n", tout);
+	if(bLeftB)
+		fprintf(stderr, "Exiting through the left\n");
+	else
+		fprintf(stderr, "Exiting through the right\n");
+		*/
+
+	if(bLeftB == bLeftA)	/* Unrecoverable error */
+	{
+		fprintf(stderr, "Could not find two orbits that exit through "
+				"sides of LPO region?? Exiting.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Apply bisection procedure */
+
+    int status;
+    int iter = 0, max_iter = 100;
+    const gsl_root_fsolver_type *Type;
+    gsl_root_fsolver *s;
+    double root = 0.0;
+    double x_lo = fmin(0.0, dv);
+    double x_hi = fmax(0.0, dv);
+    gsl_function F;
+    struct tout_params params;
+    double tout_r;   /* 1/tout for the current root */
+
+    dblcpy(params.q90, q90, DIM);
+	params.CORREC_TIME = CORREC_TIME;
+	params.correction = corr;
+
+    F.function = &tout_f;
+    F.params = &params;
+
+    Type = gsl_root_fsolver_bisection;
+    s = gsl_root_fsolver_alloc (Type);
+    gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+
+	/*
+    printf ("using %s method\n", gsl_root_fsolver_name (s));
+
+    printf ("%5s [%13s, %13s] %13s %13s\n", "iter", "lower", "upper", "root",
+            "err(est)");
+			*/
+
+    do 
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      root = gsl_root_fsolver_root (s);
+      x_lo = gsl_root_fsolver_x_lower (s);
+      x_hi = gsl_root_fsolver_x_upper (s);
+      tout_r = tout_f(root, &params);
+      status = gsl_root_test_interval (x_lo, x_hi, 1.e-16, 1.e-5);
+
+	  /*
+      if (status == GSL_SUCCESS)
+        printf ("Converged:\n");
+
+      printf ("%5d [%.11f, %.11f] %.11f %.11f\n",
+              iter, x_lo, x_hi, root, lag_r);
+			  */
+    }
+    while (status == GSL_CONTINUE && iter < max_iter);
+
+	if(iter == max_iter)	/* We did our best */
+	{
+		fprintf(stderr, "Maximum number of iterations reached "
+				"in bisection procedure. Returning last maneuver.\n");
+	}
+
+	/* Correction maneuver has been found */
+	dv = root;
+
+	/* Set q90_new before returning */
+	apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+
+	if(tout < SHADOW_TIME)
+	{
+		fprintf(stderr, "tout = %f is smaller than SHADOW_TIME = %f!\n."
+				"Exiting.", tout, SHADOW_TIME);
+		exit(EXIT_FAILURE);
+	}
+
 	return(dv);
 }

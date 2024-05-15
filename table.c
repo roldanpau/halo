@@ -20,7 +20,7 @@
 #include <math.h>				// M_PI
 
 #include "int_rtbp.h"			// DIM
-#include "correction_module.h"	// correction
+#include "correction_module.h"	// correction_opt
 #include "utils_module.h"		// dblprint
 
 /** \brief Period of nominal halo orbit. 
@@ -30,7 +30,7 @@
 static const double T = 0.3059226605957322E+01;
 
 static const double CORREC_TIME = 2*GOLDEN_FRACT*T;
-static const double SHADOW_TIME = 4.25*T;
+static const double SHADOW_TIME = 3*T;
 
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)
 static const double twentyYrs = 600*2*M_PI;
@@ -56,8 +56,7 @@ main (int argc, char *argv[])
 	// The first 3 corrections are not printed, since we are initially on the
 	// halo and they are not significant.
 	{	
-		//dv_vel = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
-		dv_st = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
+		dv_st = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
 
 		dblcpy(X1, X2, DIM);
 
@@ -65,8 +64,7 @@ main (int argc, char *argv[])
 	}
 	while(time < twentyYrs)
 	{
-		//dv_vel = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
-		dv_st = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
+		dv_st = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90, X2);
 
 		printf("%e,%e,%e,%e,%e,%e,%e,%e\n", time, q90[0], q90[1], q90[2],
 				q90[3], q90[4], q90[5], dv_st);
