@@ -3,7 +3,7 @@ progs = fft reward correction shadowing table
 OBJS = rk78.o int_rtbp.o fft_module.o utils_module.o cv_module.o \
 	   correction_module.o
 
-CFLAGS = -g -fPIC # -O3 -fPIC
+CFLAGS = -O3 -fPIC # -g -fPIC
 LDFLAGS = 
 LDLIBS = -lm -lgsl -lgslcblas
 

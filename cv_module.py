@@ -4,7 +4,7 @@
 
 import numpy as np
 
-DIM = 6     # dimension of RTBP system
+DIM = 6     ##< dimension of RTBP system
 
 ## Transform coordinates from position-momenta to position-velocities.
 #
