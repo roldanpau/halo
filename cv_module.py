@@ -4,7 +4,8 @@
 
 import numpy as np
 
-DIM = 6     ##< dimension of RTBP system
+## dimension of RTBP system
+DIM = 6
 
 ## Transform coordinates from position-momenta to position-velocities.
 #
@@ -24,6 +25,12 @@ def posmom_to_posvel(vx):
    vy[1]=y; vy[4]=dy
    vy[2]=z; vy[5]=dz
    return vy
+
+## Transform coordinates from position-velocities to position-momenta.
+#
+#
+# @param[in]  vx 	position-velocities (x,y,z,dx,dy,dz).
+# @param[out] vy 	position-momenta (x,px,y,py,z,pz).
 
 def posvel_to_posmom(vx):
    vy = np.empty([DIM,])

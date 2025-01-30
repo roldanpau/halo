@@ -21,8 +21,8 @@ import numpy as np
 from cv_module import * 	    # posmom_to_posvel, posvel_to_posmom
 from correction_module import * # correction_regression, correction_NN
 
-# CONSTANTS
-DIM = 6     ##< dimension of RTBP system
+## dimension of RTBP system
+DIM = 6     
 
 ## \brief Period of nominal halo orbit. 
 #
@@ -30,12 +30,15 @@ DIM = 6     ##< dimension of RTBP system
 #
 T = 0.3059226605957322E+01
 
-twentyYrs = 20*2*np.pi  ##< 20 yrs (in normalized units)
+## 20 yrs (in normalized units)
+twentyYrs = 20*2*np.pi  
 
 # GOLDEN_FRACT =20.381966    ##< Fraction of a circle occupied by the golden angle
 
-CORREC_TIME = T	##< Perform one correction dv every CORREC_TIME
-SHADOW_TIME = 3*T	##< Correction stays in LPO region longer than SHADOW_TIME
+## Perform one correction dv every CORREC_TIME
+CORREC_TIME = T	
+## Correction stays in LPO region longer than SHADOW_TIME
+SHADOW_TIME = 3*T	
 
 # Interface to C functions 
 
@@ -45,6 +48,7 @@ _halo = CDLL(current_dir + "/libhalo.so")
 _halo.int_rtbp.argtypes = (c_double, POINTER(c_double), c_double, c_double,
         c_double, c_int)
 
+## Interface to corresponding C function
 def int_rtbp(t, x, tol, hmin, hmax, bPrint):
     global _halo
     array_type = c_double * DIM
@@ -57,6 +61,7 @@ _halo.correction_opt.restype = c_double
 _halo.correction_opt.argtypes = (POINTER(c_double), c_double, c_double,
         c_int, POINTER(c_double), POINTER(c_double))
 
+## Interface to corresponding C function
 def correction_opt(q_Masde, CORREC_TIME, SHADOW_TIME, corr, q90, q90_new):
     global _halo
     array_type = c_double * DIM
@@ -78,6 +83,15 @@ def print_array(arr):
         print("{}".format(elem), end=" ")
     print("")
 
+## Apply correction dv to q90
+#
+# This function applies the maneuver dv to the initial condition \f$
+# q_{90}=(x,y,z,v_x,v_y,v_z) \f$ in the STable direction \f$ E^s \f$. The IC
+# after applying the maneuver, \f$ q90 + \Delta v\f$, is returned in q90_new.
+#
+# @param[in]      q90         I.c.  (pos-vel coordinates)
+# @param[in]      dv          Magnitude of the maneuver (may be negative)
+
 def apply_correction_st(q90, dv):
 
     # w = stable direction
@@ -95,14 +109,15 @@ def apply_correction_st(q90, dv):
 
     return q90_new
 
-# I.c. close to the nominal halo orbit, given as x,y,z,xd,yd,zd
+## I.c. close to the nominal halo orbit, given as x,y,z,xd,yd,zd
 X1 = np.array([-0.9916647163367744E+00,  0.0000000000000000E+00,
     0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
     0.0000000000000000E+00])
 
 #print("The initial condition is: ", X1)
 
-time = 0.0 ##< Total time of extended orbit (in LPO region)
+## Total time of extended orbit (in LPO region)
+time = 0.0 
 
 # The first 3 corrections are not printed, since we are initially on the
 # halo and they are not significant.

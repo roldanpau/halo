@@ -10,7 +10,8 @@ import tensorflow as tf
 import keras
 
 
-DIM = 6     # dimension of RTBP system
+## dimension of RTBP system
+DIM = 6     
 
 ## Given IC, find correction maneuver according to polynomial regression.
 #
