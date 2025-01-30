@@ -1,24 +1,25 @@
-## \file shadowing_NN.py
+## \file shadowing_pred.py
 #  \brief Construct a trajectory that ``shadows'' an LPO orbit.
 #
 #  Construct a trajectory that ``shadows'' an LPO orbit for 20 years by making
-#  tiny adjustments in velocity every CORREC_TIME (usually 90 days).
+#  tiny adjustments in velocity every CORREC_TIME (around 180 days).
 #  
-#  We extend the time interval within the LPO region by querying the Neural
-#  Network about which dv correction to use (function correction_NN). The NN
-#  has been trained in neuralnet.ipynb.
+#  We extend the time interval within the LPO region by querying the predictive
+#  model (either a polynomial regression model or a neural network) about which
+#  dv correction to use (function correction_NN/correction_regression). The
+#  model has been trained in supervised.ipynb or neuralnet.ipynb.
 #  
 #  USAGE:  
 #   (Remember to `conda activate halo' environment first)
-#   python shadowing_NN.py
-#   python shadowing_NN.py >shadowing_NN.res 2>shadowing_NN.err
+#   python shadowing_pred.py
+#   python shadowing_pred.py >shadowing_pred.res 2>shadowing_pred.err
 
 import os
 import sys                      # sys.stdout.flush
 from ctypes import *
 import numpy as np
 from cv_module import * 	    # posmom_to_posvel, posvel_to_posmom
-from correction_module import * # correction_NN
+from correction_module import * # correction_regression, correction_NN
 
 # CONSTANTS
 DIM = 6     ##< dimension of RTBP system
@@ -30,11 +31,10 @@ DIM = 6     ##< dimension of RTBP system
 T = 0.3059226605957322E+01
 
 twentyYrs = 20*2*np.pi  ##< 20 yrs (in normalized units)
-#twentyYrs = 2*np.pi  ##< 20 yrs (in normalized units)
 
-GOLDEN_FRACT = 0.381966    ##< Fraction of a circle occupied by the golden angle
+# GOLDEN_FRACT =20.381966    ##< Fraction of a circle occupied by the golden angle
 
-CORREC_TIME = 1*GOLDEN_FRACT*T	##< Perform one correction dv every CORREC_TIME
+CORREC_TIME = T	##< Perform one correction dv every CORREC_TIME
 SHADOW_TIME = 3*T	##< Correction stays in LPO region longer than SHADOW_TIME
 
 # Interface to C functions 
@@ -124,28 +124,21 @@ while(time < twentyYrs):
     # No need to integrate orbit for CORREC_TIME, since this is done inside
     # correction_opt
 
-    ## My vectorfield expects the order x,px,y,py,z,pz
-    #q = posvel_to_posmom(X1)
-    #
-    ## Integrate orbit for CORREC_TIME
-    #q = int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0)
-    #
-    #q90 = posmom_to_posvel(q)
-
     # Find correction maneuver according to optimal method
     q90 = np.empty([DIM,])      # Make space for q90
     q90_new = np.empty([DIM,])
     [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1, q90,
             q90_new)
 
-    # Find correction maneuver according to the neural network
-    dv_NN = correction_NN(q90)
-    dv_NN = dv_NN[0,0]
+    # Find correction maneuver according to the predictor (either regression or
+    # NN)
+    dv_pred = correction_regression(q90)
+    dv_pred = dv_pred[0,0]
 
-    print("dv: ", dv, "dv_NN: ", dv_NN)
+    print("Years: ", time/(2*np.pi), "\tdv_opt: ", dv, "\tdv_pred: ", dv_pred)
 
     # Apply correction maneuver, and iterate again.
-    X1 = apply_correction_st(q90, dv_NN)
+    X1 = apply_correction_st(q90, dv_pred)
     #print_array(X1)
     time = time + CORREC_TIME
 

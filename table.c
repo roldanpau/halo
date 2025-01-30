@@ -29,7 +29,7 @@
  */
 static const double T = 0.3059226605957322E+01;
 
-static const double CORREC_TIME = 1*GOLDEN_FRACT*T;
+static const double CORREC_TIME = T;
 static const double SHADOW_TIME = 3*T;
 
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)

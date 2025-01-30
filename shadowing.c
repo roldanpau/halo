@@ -2,7 +2,8 @@
   * \brief Construct a trajectory that ``shadows'' an LPO orbit.
   *
   * Construct a trajectory that ``shadows'' an LPO orbit for 20 years by making
-  * tiny adjustments in velocity every 90 days.
+  * tiny adjustments in velocity every half period (equivalent to roughly 90
+  * days).
   *
   * We extend the time interval within the LPO region by applying a procedure
   * similar to that described in [Masdemont et al., Global analysis of direct
@@ -45,12 +46,13 @@ main (int argc, char *argv[])
 	dblprint(X1, DIM);
 	printf("\n");
 
-	double CORREC_TIME = 2*GOLDEN_FRACT*T;
+	double CORREC_TIME = T;
 	double SHADOW_TIME = 3*T;
 
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
+		printf("Years: %f\n", time/(2*M_PI));
 		/*
 		dv = correction(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_VEL, q90, X2);
 
@@ -67,7 +69,7 @@ main (int argc, char *argv[])
 		fprintf(stderr, "OPTIMAL CORRECTION_ST  Accepted maneuver dv: %e\n\n",
 				dv);
 
-		printf("New IC after 69 days: \n");
+		printf("New IC after 90 days: \n");
 		dblprint(X2, DIM);
 		printf("\n\n");
 
