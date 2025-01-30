@@ -18,11 +18,18 @@ halo).
 * You will need a linux OS with the usual C/C++ developing
 environment (compiler, libraries), as well as the python interpreter. Moreover,
 you will need to install the GNU Scientific Library (GSL).
+To ensure that user has the same version of my python libraries, he is advised
+to use conda to create the same virtual environment as mine (See ``Installing''
+below).
 
 ### Installing
 
 * Download code to any directory and type `make` to build C programs.
 * `make clean` to clean up C objects and binaries.
+* Use conda to create the same virtual environment as mine with
+```
+conda create --name halo --file requirements.txt
+```
 
 ### Executing programs
 
@@ -32,6 +39,7 @@ you will need to install the GNU Scientific Library (GSL).
 * Python programs: 
 ```
 python halo.py
+python shadowing_pred.py > shadowing_pred.res 2> shadowing_pred.err
 ```
 * C programs:
 ```
