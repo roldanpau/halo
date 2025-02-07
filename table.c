@@ -30,18 +30,38 @@
 static const double T = 0.3059226605957322E+01;
 
 static const double CORREC_TIME = T;
-static const double SHADOW_TIME = 3*T;
-
+// SHADOW_TIME can be up to 3*T (for I.C. at t=0), but needs to be reduced to
+// 2*T for I.C. at t=T/4.
+// static const double SHADOW_TIME = 3*T;
+static const double SHADOW_TIME = 2*T;
+ 
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)
-static const double twentyYrs = 600*2*M_PI;
+static const double twentyYrs = 1000*2*M_PI;
 
 int
 main (int argc, char *argv[])
 {
-	// I.c. close to the nominal halo orbit, given as x,y,z,xd,yd,zd
-	double X1[6] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
-    0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
-    0.0000000000000000E+00};
+	// I.c. on the nominal halo orbit, given as x,y,z,xd,yd,zd
+	//double X1[6] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
+    //0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
+    //0.0000000000000000E+00};
+
+	// I.c. at QUARTER PERIOD (T/4) of the nominal halo orbit
+	// (x,px,y,py,z,pz) = -9.905881e-01 -1.456353e-03 4.517090e-03 -9.909699e-01 -2.167137e-04 -2.007546e-03
+	// In (x,y,z, dx=px+y, dy=py-x, dz) coords:
+	//double X1[6] = {-9.905881e-01, 4.517090e-03, -2.167137e-04,
+	//	-1.456353e-03+4.517090e-03, -9.909699e-01-(-9.905881e-01),
+	//	-2.007546e-03};
+ 
+	// I.c. at T/8 of the nominal halo orbit
+	// (x,px,y,py,z,pz) = -9.914575e-01 -2.013749e-03 3.327175e-03 -9.850071e-01 5.350106e-04 -1.703465e-03
+	// In (x,y,z, dx=px+y, dy=py-x, dz) coords:
+	double X1[6] = {-9.914575e-01, 3.327175e-03, 5.350106e-04,
+		-2.013749e-03+3.327175e-03, -9.850071e-01-(-9.914575e-01),
+		-1.703465e-03};
+ 
+
+
 
 	double dv_vel;			/* Modulus of the CORRECTION_VEL maneuver */
 	double dv_st;			/* Modulus of the CORRECTION_ST maneuver */
