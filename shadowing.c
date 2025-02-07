@@ -49,6 +49,9 @@ main (int argc, char *argv[])
 	double CORREC_TIME = T;
 	double SHADOW_TIME = 3*T;
 
+	int bNow = 0;	/* Do not apply corrections inmediatly, first integrate for
+					   CORREC_TIME */
+
 	double time=0.0;		/* Total time of extended orbit (in LPO region) */
 	while(time < twentyYrs)
 	{
@@ -63,8 +66,13 @@ main (int argc, char *argv[])
 		fprintf(stderr, "CORRECTION_ST  Accepted maneuver dv: %e\n\n", dv);
 		*/
 
-		dv = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, q90,
-				X2);
+		dv = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST, bNow,
+				q90, X2);
+		if(dv==0)
+		{
+			fprintf(stderr, "Correction procedure failed! Exiting.");
+			exit(EXIT_FAILURE);
+		}
 
 		fprintf(stderr, "OPTIMAL CORRECTION_ST  Accepted maneuver dv: %e\n\n",
 				dv);

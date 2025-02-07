@@ -430,6 +430,11 @@ double tout_f(double dv, void *params)
   * \remark For convenience, the state after applying the maneuver CORREC_TIME
   * from now, \f$ q90 + \Delta v\f$, is returned in q90_new.
   *
+  * \remark If the maneuver is not able to guarantee that orbit remains inside
+  * the LPO region for at least SHADOW_TIME, the procedure is considered
+  * unsuccessful, and we return dv=0. We also leave the orbit unmodified, i.e.
+  * we return q90_new=q90=q_Masde.
+  *
   * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
   *
   * @param[in]		CORREC_TIME		Apply correction after CORREC_TIME time
@@ -437,14 +442,15 @@ double tout_f(double dv, void *params)
   * ensure we stay shadowing the halo.
   *
   * @param[in]      corr   		Type of correction maneuver
+  * @param[in]      bNow   		Find and apply correction inmediately!!
   * @param[out]		q90         State after CORREC_TIME (pos-vel)
   * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
   *
-  * @returns	dv	Modulus of correction maneuver
+  * @returns	dv	Modulus of correction maneuver (or 0, if procedure fails).
   */
 
 double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
-		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM])
+		SHADOW_TIME, correction_t corr, int bNow, double q90[DIM], double q90_new[DIM])
 {
 	double q[DIM];		// q is a point in the orbit (pos-mom)
 	double v_mod;		// Modulus of velocity vector
@@ -455,13 +461,20 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
 
 	double dv;		/* Modulus of the maneuver */
 
-	/* My vectorfield expects the order x,px,y,py,z,pz. */
-	posvel_to_posmom(q_Masde, q);
+	if(bNow)
+	{
+		dblcpy(q90,q_Masde,DIM);
+	}
+	else
+	{
+		/* My vectorfield expects the order x,px,y,py,z,pz. */
+		posvel_to_posmom(q_Masde, q);
 
-	/* Integrate orbit for CORREC_TIME time */
-	int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
+		/* Integrate orbit for CORREC_TIME time */
+		int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
 
-	posmom_to_posvel(q, q90);
+		posmom_to_posvel(q, q90);
+	}
 
 	/*
 	fprintf(stderr, "q90: %e %e %e %e %e %e\n", 
@@ -586,9 +599,11 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
 
 	if(tout < SHADOW_TIME)
 	{
-		fprintf(stderr, "tout = %f is smaller than SHADOW_TIME = %f!\n."
-				"Exiting.", tout, SHADOW_TIME);
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "tout = %f is smaller than SHADOW_TIME = %f!."
+				"Returning dv=0\n", tout, SHADOW_TIME);
+		dv=0;
+		dblcpy(q90, q_Masde, DIM);
+		dblcpy(q90_new, q_Masde, DIM);
 	}
 
 	return(dv);

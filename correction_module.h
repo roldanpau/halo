@@ -20,4 +20,4 @@ double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
 
 double tout(double dv, void *params);
 double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
-		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM]);
+		SHADOW_TIME, correction_t corr, int bNow, double q90[DIM], double q90_new[DIM]);
