@@ -1,19 +1,19 @@
-	/** \file table.c
-	  * \brief Generate table containing training examples for supervised learning
-	  *
-	  * Generate a table of labelled examples of the form
-	  * x y z dx dy dz dv
-	  * associating to each state (t,x,y,z,dx,dy,dz) the correction dv (magnitude
-	  * applied in the direction of current velocity).
-	  * 
-	  * We generate these examples by constructing a trajectory that ``shadows'' an
-	  * LPO orbit by making tiny adjustments in velocity every GOLDEN_FRACT*T. The
-	  * frequency GOLDEN_FRACT is chosen so that the generated examples cover the
-	  * whole periodic orbit.
-	  *
-	  * USAGE:	./table > maneuvers.csv
-	  *
-	  */
+/** \file table.c
+  * \brief Generate table containing training examples for supervised learning
+  *
+  * Generate a table of labelled examples of the form
+  * x y z dx dy dz dv
+  * associating to each state (t,x,y,z,dx,dy,dz) the correction dv (magnitude
+  * applied in the direction of current velocity).
+  * 
+  * We generate these examples by constructing a trajectory that ``shadows'' an
+  * LPO orbit by making tiny adjustments in velocity every GOLDEN_FRACT*T. The
+  * frequency GOLDEN_FRACT is chosen so that the generated examples cover the
+  * whole periodic orbit.
+  *
+  * USAGE:	./table > maneuvers.csv
+  *
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
