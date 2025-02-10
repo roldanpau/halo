@@ -47,15 +47,12 @@ X1 = np.array([-9.914575e-01, 3.327175e-03, 5.350106e-04,
 ## Amount of points inside the cube
 amount = 100
 
-## Apply corrections inmediatly, without first integratint for CORREC_TIME
-bNow = 1
-
 # Sample small cube of radius R around X1 randomly
 cube = R*(np.random.rand(amount, DIM)-0.5)+X1
 
 for idx, x in enumerate(cube):  # For each point inside the cube
     print(idx,x)
-    bOK = shadowing(x,10,bNow)  # Try shadowing for 10 years
+    bOK = shadowing(x,10)  # Try shadowing for 10 years
     if(bOK):
         print("Shadowing of i.c.", idx, "for", 10, "years was successful!")
     else:

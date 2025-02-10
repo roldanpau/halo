@@ -106,10 +106,9 @@ def apply_correction_st(q90, dv):
 #
 # @param[in]      X1    I.c.  (pos-vel coordinates)
 # @param[in]      yrs   Length of shadowing (in years)
-# @param[in]      bNow  Find and apply correction inmediately!!
 # @param[out]     bOK   Return flag (True or False)    
 
-def shadowing(X1, yrs, bNow):
+def shadowing(X1, yrs):
     ## \brief Period of nominal halo orbit. 
     #
     # The period is close to \f$\pi\f$, i.e. approximately 180 days. 
@@ -131,13 +130,35 @@ def shadowing(X1, yrs, bNow):
     ## Total time of extended orbit (in LPO region)
     time = 0.0 
 
+    q90 = np.empty([DIM,])      # Make space for q90
+    q90_new = np.empty([DIM,])  # Make space for q90_new
+
+    # The first correction is applied inmediately, NOT after CORREC_TIME.
+    # Thus we set bNow = True.
+    bNow = 1
+
+    # Find correction maneuver according to optimal method
+    [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1,
+            bNow, q90, q90_new)
+    if(dv==0):
+        return False
+
+    # Apply correction maneuver.
+    # This is not strictly necessary for correction_opt, where dv is
+    # actually applied and modified q90 is returned as q90_new.
+    # However, it IS necessary for correction_regression or correction_NN.
+    X1 = apply_correction_st(X1, dv)
+    #print_array(X1)
+
+    # Every subsequent correction is applied after integrating CORREC_TIME.
+    # Thus we set bNow = False.
+    bNow = 0
+
     # The first 3 corrections are not printed, since we are initially on the
     # halo and they are not significant.
     while(time < 3*CORREC_TIME):
 
         # Find correction maneuver according to optimal method
-        q90 = np.empty([DIM,])      # Make space for q90
-        q90_new = np.empty([DIM,])
         [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1,
                 bNow, q90, q90_new)
         if(dv==0):

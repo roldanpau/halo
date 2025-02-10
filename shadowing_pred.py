@@ -3,6 +3,9 @@
 #
 #  Construct a trajectory that ``shadows'' an LPO orbit for 20 years by making
 #  tiny adjustments in velocity every CORREC_TIME (around 180 days).
+#
+#  This program is OBSOLETE, since shadowing() does not use
+#  correction_NN/correction_supervised anymore, it uses correction_opt!!!
 #  
 #  USAGE:  
 #   (Remember to `conda activate halo' environment first)
@@ -23,7 +26,6 @@ X1 = np.array([-0.9916647163367744E+00,  0.0000000000000000E+00,
     0.0000000000000000E+00])
 
 ## Do NOT apply corrections inmediatly, first integrate for CORREC_TIME
-bNow = 0
-bOK = shadowing(X1,20,bNow)
+bOK = shadowing(X1,20)
 if(bOK):
     print("Shadowing of X1 for", 20, "years was successful")
