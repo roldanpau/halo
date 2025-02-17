@@ -360,8 +360,7 @@ double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
   */
 struct tout_params 
 {
-    double q90[6];  ///< state after 90 days (pos-vel)
-	double CORREC_TIME;		///< maneuver is applied after CORREC_TIME
+    double q[6];  ///< initial condition (pos-vel)
 	correction_t correction;	///< type of correction maneuver
 };
 
@@ -387,18 +386,15 @@ double tout_f(double dv, void *params)
 {
     struct tout_params*p = (struct tout_params *)params;
 
-	double CORREC_TIME;
 	double tout;	/* exit time */
 	int bLeft;		/* Do we leave through the left or right? */
 
 	double ret;		/* return value */
 
 	// auxiliary variables
-	double q90_new[DIM];
+	double q_new[DIM];
 
-	CORREC_TIME = p->CORREC_TIME;
-
-    apply_correction(p->q90, dv, p->correction, &tout, &bLeft, q90_new);
+    apply_correction(p->q, dv, p->correction, &tout, &bLeft, q_new);
 
 	if(bLeft) 
 		ret = -1.0/tout;
@@ -409,13 +405,11 @@ double tout_f(double dv, void *params)
 }
 
 /**
-  * \brief Given an IC close to the halo, find a small correction after
-  * CORREC_TIME (usually 90 days) that ensures it remains inside the LPO
-  * region.
+  * \brief Given an IC close to the halo, find a small correction that ensures it remains inside the LPO region.
   *
   * Given an initial condition that is very close to the nominal halo periodic
-  * orbit, find a (tiny) correction CORREC_TIME from now that ensures we stay
-  * on the LPO region for as long as possible, effectively shadowing the halo.
+  * orbit, find a (tiny) correction that ensures we stay on the LPO region for
+  * as long as possible, effectively shadowing the halo.
   *
   * We use a bisection method: Find an interval (slowly varying the velocity's
   * module \f$|v|\f$) such that at the endpoints we leave from the left/right
@@ -427,32 +421,25 @@ double tout_f(double dv, void *params)
   * In practice, to find the optimal one, we iterate the bisection procedure
   * until the interval \f$ [dv_-, dv_+] \f$ is practically zero length.
   *
-  * \remark For convenience, the state after applying the maneuver CORREC_TIME
-  * from now, \f$ q90 + \Delta v\f$, is returned in q90_new.
+  * \remark For convenience, the state after applying the maneuver, \f$ q +
+  * \Delta v\f$, is returned in q_new.
   *
   * \remark If the maneuver is not able to guarantee that orbit remains inside
   * the LPO region for at least SHADOW_TIME, the procedure is considered
   * unsuccessful, and we return dv=0. We also leave the orbit unmodified, i.e.
-  * we return q90_new=q90=q_Masde.
+  * we return q_new=q.
   *
-  * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
-  *
-  * @param[in]		CORREC_TIME		Apply correction after CORREC_TIME time
-  * @param[in]		SHADOW_TIME		Extra time (after CORREC_TIME) we must
-  * ensure we stay shadowing the halo.
-  *
+  * @param[in]		q			Initial condition (pos-vel coordinates)
+  * @param[in]		SHADOW_TIME	Time we must ensure we stay shadowing the halo.
   * @param[in]      corr   		Type of correction maneuver
-  * @param[in]      bNow   		Find and apply correction inmediately!!
-  * @param[out]		q90         State after CORREC_TIME (pos-vel)
-  * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
+  * @param[out]		q_new		q after maneuver (pos-vel coordinates)
   *
   * @returns	dv	Modulus of correction maneuver (or 0, if procedure fails).
   */
 
-double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
-		SHADOW_TIME, correction_t corr, int bNow, double q90[DIM], double q90_new[DIM])
+double correction_opt(double q[DIM], double SHADOW_TIME, correction_t corr,
+		double q_new[DIM])
 {
-	double q[DIM];		// q is a point in the orbit (pos-mom)
 	double v_mod;		// Modulus of velocity vector
 	
 	double tout;	/* exit time */
@@ -461,29 +448,14 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
 
 	double dv;		/* Modulus of the maneuver */
 
-	if(bNow)
-	{
-		dblcpy(q90,q_Masde,DIM);
-	}
-	else
-	{
-		/* My vectorfield expects the order x,px,y,py,z,pz. */
-		posvel_to_posmom(q_Masde, q);
-
-		/* Integrate orbit for CORREC_TIME time */
-		int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
-
-		posmom_to_posvel(q, q90);
-	}
-
 	/*
-	fprintf(stderr, "q90: %e %e %e %e %e %e\n", 
-			q90[0], q90[1], q90[2], q90[3], q90[4], q90[5]); 
+	fprintf(stderr, "q: %e %e %e %e %e %e\n", 
+			q[0], q[1], q[2], q[3], q[4], q[5]); 
 			*/
 
 	/* Find out which side (left/right) we are exiting when using maneuver dv=0
 	 * */
-	apply_correction(q90, 0.0, corr, &tout, &bLeftA, q90_new);
+	apply_correction(q, 0.0, corr, &tout, &bLeftA, q_new);
 
 	/*
 	fprintf(stderr, "Exit time: %e\n", tout);
@@ -498,7 +470,7 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
     /* Try corrections with positive modulus */
 	for(dv=1.e-7; dv<1.e-3; dv+=1.e-7)
 	{
-		apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+		apply_correction(q, dv, corr, &tout, &bLeftB, q_new);
 
 		if(bLeftB != bLeftA)
 			break;
@@ -510,7 +482,7 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
         /* Try corrections with negative modulus */
         for(dv=-1.e-7; dv>-1.e-3; dv-=1.e-7)
         {
-			apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+			apply_correction(q, dv, corr, &tout, &bLeftB, q_new);
 
             if(bLeftB != bLeftA)
                 break;
@@ -547,8 +519,7 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
     struct tout_params params;
     double tout_r;   /* 1/tout for the current root */
 
-    dblcpy(params.q90, q90, DIM);
-	params.CORREC_TIME = CORREC_TIME;
+    dblcpy(params.q, q, DIM);
 	params.correction = corr;
 
     F.function = &tout_f;
@@ -594,17 +565,81 @@ double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
 	/* Correction maneuver has been found */
 	dv = root;
 
-	/* Set q90_new before returning */
-	apply_correction(q90, dv, corr, &tout, &bLeftB, q90_new);
+	/* Set q_new before returning */
+	apply_correction(q, dv, corr, &tout, &bLeftB, q_new);
 
 	if(tout < SHADOW_TIME)
 	{
 		fprintf(stderr, "tout = %f is smaller than SHADOW_TIME = %f!."
 				"Returning dv=0\n", tout, SHADOW_TIME);
 		dv=0;
-		dblcpy(q90, q_Masde, DIM);
-		dblcpy(q90_new, q_Masde, DIM);
+		dblcpy(q_new, q, DIM);
 	}
+
+	return(dv);
+}
+
+/**
+  * \brief Given an IC close to the halo, integrate it for CORREC_TIME and find a small correction that ensures it remains inside the LPO region.
+  *
+  * Given an initial condition that is very close to the nominal halo periodic
+  * orbit, integrate it for time CORREC_TIME (usually around 90 days), and find
+  * a (tiny) correction that ensures we stay on the LPO region for as long as
+  * possible, effectively shadowing the halo.
+  *
+  * We use a bisection method: Find an interval (slowly varying the velocity's
+  * module \f$|v|\f$) such that at the endpoints we leave from the left/right
+  * of the region.
+  * Starting with this interval, we perform a bisection procedure until we find
+  * the optimal correction that stays in the LPO region for as long as
+  * possible.
+  *
+  * In practice, to find the optimal one, we iterate the bisection procedure
+  * until the interval \f$ [dv_-, dv_+] \f$ is practically zero length.
+  *
+  * \remark For convenience, the state after applying the maneuver CORREC_TIME
+  * from now, \f$ q90 + \Delta v\f$, is returned in q90_new.
+  *
+  * \remark If the maneuver is not able to guarantee that orbit remains inside
+  * the LPO region for at least SHADOW_TIME, the procedure is considered
+  * unsuccessful, and we return dv=0. We also leave the orbit unmodified, i.e.
+  * we return q90_new=q90=q_Masde.
+  *
+  * @param[in]		q_Masde		Initial condition (pos-vel coordinates)
+  *
+  * @param[in]		CORREC_TIME		Apply correction after CORREC_TIME time
+  * @param[in]		SHADOW_TIME		Extra time (after CORREC_TIME) we must
+  * ensure we stay shadowing the halo.
+  *
+  * @param[in]      corr   		Type of correction maneuver
+  * @param[out]		q90         State after CORREC_TIME (pos-vel)
+  * @param[out]		q90_new     q90 after maneuver (pos-vel coordinates)
+  *
+  * @returns	dv	Modulus of correction maneuver (or 0, if procedure fails).
+  */
+
+double int_correction_opt(double q_Masde[DIM], double CORREC_TIME, double
+		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM])
+{
+	double q[DIM];		// q is a point in the orbit (pos-mom)
+	double v_mod;		// Modulus of velocity vector
+	
+	double tout;	/* exit time */
+	int bLeftA;	/* Do we leave through the left or right? (endpoint A) */
+	int bLeftB;	/* Do we leave through the left or right? (endpoint B) */
+
+	double dv;		/* Modulus of the maneuver */
+
+	/* My vectorfield expects the order x,px,y,py,z,pz. */
+	posvel_to_posmom(q_Masde, q);
+
+	/* Integrate orbit for CORREC_TIME time */
+	int_rtbp(CORREC_TIME, q, 1.e-15, 1.e-5, 1.e-1, 0);
+
+	posmom_to_posvel(q, q90);
+
+	/* Obtain optimal correction to q90 */
+	dv = correction_opt(q90, SHADOW_TIME, corr, q90_new);
 
 	return(dv);
 }

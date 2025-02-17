@@ -36,20 +36,33 @@ def int_rtbp(t, x, tol, hmin, hmax, bPrint):
             c_double(hmin), c_double(hmax), c_int(bPrint))
     return np.array(x)
 
-_halo.correction_opt.restype = c_double
-_halo.correction_opt.argtypes = (POINTER(c_double), c_double, c_double,
-        c_int, c_int, POINTER(c_double), POINTER(c_double))
+_halo.int_correction_opt.restype = c_double
+_halo.int_correction_opt.argtypes = (POINTER(c_double), c_double, c_double,
+        c_int, POINTER(c_double), POINTER(c_double))
 
 ## Interface to corresponding C function
-def correction_opt(q_Masde, CORREC_TIME, SHADOW_TIME, corr, bNow, q90, q90_new):
+def int_correction_opt(q_Masde, CORREC_TIME, SHADOW_TIME, corr, q90, q90_new):
     global _halo
     array_type = c_double * DIM
     q_Masde = (array_type)(*q_Masde)
     q90 = (array_type)(*q90)
     q90_new = (array_type)(*q90_new)
-    dv = _halo.correction_opt(q_Masde, c_double(CORREC_TIME),
-            c_double(SHADOW_TIME), c_int(corr), c_int(bNow), q90, q90_new)
+    dv = _halo.int_correction_opt(q_Masde, c_double(CORREC_TIME),
+            c_double(SHADOW_TIME), c_int(corr), q90, q90_new)
     return dv, np.array(q90), np.array(q90_new)
+
+_halo.correction_opt.restype = c_double
+_halo.int_correction_opt.argtypes = (POINTER(c_double), c_double, c_int,
+        POINTER(c_double))
+
+## Interface to corresponding C function
+def correction_opt(q, SHADOW_TIME, corr, q_new):
+    global _halo
+    array_type = c_double * DIM
+    q = (array_type)(*q)
+    q_new = (array_type)(*q_new)
+    dv = _halo.correction_opt(q, c_double(SHADOW_TIME), c_int(corr), q_new)
+    return dv, np.array(q_new)
 
 # Set numpy to use this lambda function for every float it prints out
 np.set_printoptions(formatter={'float': lambda x: "{0:0.16e}".format(x)})
@@ -133,13 +146,8 @@ def shadowing(X1, yrs):
     q90 = np.empty([DIM,])      # Make space for q90
     q90_new = np.empty([DIM,])  # Make space for q90_new
 
-    # The first correction is applied inmediately, NOT after CORREC_TIME.
-    # Thus we set bNow = True.
-    bNow = 1
-
     # Find correction maneuver according to optimal method
-    [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1,
-            bNow, q90, q90_new)
+    [dv, q90_new] = correction_opt(X1, SHADOW_TIME, 1, q90_new)
     if(dv==0):
         return False
 
@@ -150,17 +158,13 @@ def shadowing(X1, yrs):
     X1 = apply_correction_st(X1, dv)
     #print_array(X1)
 
-    # Every subsequent correction is applied after integrating CORREC_TIME.
-    # Thus we set bNow = False.
-    bNow = 0
-
     # The first 3 corrections are not printed, since we are initially on the
     # halo and they are not significant.
     while(time < 3*CORREC_TIME):
 
         # Find correction maneuver according to optimal method
-        [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1,
-                bNow, q90, q90_new)
+        [dv, q90, q90_new] = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME,
+                1, q90, q90_new)
         if(dv==0):
             return False
 
@@ -178,10 +182,8 @@ def shadowing(X1, yrs):
         # correction_opt
 
         # Find correction maneuver according to optimal method
-        q90 = np.empty([DIM,])      # Make space for q90
-        q90_new = np.empty([DIM,])
-        [dv, q90, q90_new] = correction_opt(X1, CORREC_TIME, SHADOW_TIME, 1,
-                bNow, q90, q90_new)
+        [dv, q90, q90_new] = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME,
+                1, q90, q90_new)
         if(dv==0):
             return False
 

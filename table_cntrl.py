@@ -59,23 +59,15 @@ cube = R*(np.random.rand(amount, DIM)-0.5)+X1
 #
 T = 0.3059226605957322E+01
 
-## Perform one correction dv every CORREC_TIME
-CORREC_TIME = T	
 ## Correction stays in LPO region longer than SHADOW_TIME
 SHADOW_TIME = 2*T	
 
-q90 = np.empty([DIM,])      # Make space for q90
-q90_new = np.empty([DIM,])  # Make space for q90_new
-
-# The correction is applied inmediately, NOT after CORREC_TIME.
-# Thus we set bNow = True.
-bNow = 1
+q_new = np.empty([DIM,])  # Make space for q_new
 
 print("x,y,z,dx,dy,dz,dv_st")
 for idx, x in enumerate(cube):  # For each point inside the cube
     # Find correction maneuver according to optimal method
-    [dv, q90, q90_new] = correction_opt(x, CORREC_TIME, SHADOW_TIME, 1,
-            bNow, q90, q90_new)
+    [dv, q_new] = correction_opt(x, SHADOW_TIME, 1, q_new)
     if(dv==0):
         sys.exit("correction_opt returned an error")
 

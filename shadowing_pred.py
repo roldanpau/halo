@@ -25,7 +25,6 @@ X1 = np.array([-0.9916647163367744E+00,  0.0000000000000000E+00,
     0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
     0.0000000000000000E+00])
 
-## Do NOT apply corrections inmediatly, first integrate for CORREC_TIME
 bOK = shadowing(X1,20)
 if(bOK):
     print("Shadowing of X1 for", 20, "years was successful")

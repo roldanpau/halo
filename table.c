@@ -61,9 +61,6 @@
 		-1.703465e-03};
  
 
-	int bNow = 0;	/* Do not apply corrections inmediatly, first integrate for
-					   CORREC_TIME */
-
 	double dv_vel;			/* Modulus of the CORRECTION_VEL maneuver */
 	double dv_st;			/* Modulus of the CORRECTION_ST maneuver */
 	double q90[DIM];		/* State after 90 days */
@@ -77,8 +74,8 @@
 	// The first 3 corrections are not printed, since we are initially on the
 	// halo and they are not significant.
 	{	
-		dv_st = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST,
-				bNow, q90, X2);
+		dv_st = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST,
+				q90, X2);
 		if(dv_st==0)
 		{
 			fprintf(stderr, "Correction procedure failed! Exiting.");
@@ -91,8 +88,8 @@
 	}
 	while(time < twentyYrs)
 	{
-		dv_st = correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST,
-				bNow, q90, X2);
+		dv_st = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME, CORRECTION_ST,
+				q90, X2);
 		if(dv_st==0)
 		{
 			fprintf(stderr, "Correction procedure failed! Exiting.");

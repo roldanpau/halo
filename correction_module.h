@@ -19,5 +19,7 @@ double correction(double q_Masde[DIM], double CORREC_TIME, double SHADOW_TIME,
 		correction_t corr, double q90[DIM], double q90_new[DIM]);
 
 double tout(double dv, void *params);
-double correction_opt(double q_Masde[DIM], double CORREC_TIME, double
-		SHADOW_TIME, correction_t corr, int bNow, double q90[DIM], double q90_new[DIM]);
+double correction_opt(double q[DIM], double SHADOW_TIME, correction_t corr,
+		double q_new[DIM]);
+double int_correction_opt(double q_Masde[DIM], double CORREC_TIME, double
+		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM]);
