@@ -1,17 +1,15 @@
-/** \file reward.c
-  * \brief Compute RL reward of an initial condition close to nominal orbit
+/** \file eval_nominal_orbit.c
+  * \brief Integrate nominal orbit from time 0 up to a given time T.
   *
-  * Given an initial condition close to the nominal one, integrate both the
-  * perturbed and nominal orbits, and compute the RL (negative) reward (or
-  * loss) as the distance between both final conditions.
+  * Integrate nominal halo orbit from time 0 up to a given time T, to find the
+  * final condition p(T).
   *
   * NOTES: 
   *		The nominal halo orbit is not actually integrated, we use its Fourier
-  *		representation for efficiency.
+  *		representation for efficiency. The Fourier coefficients must be given
+  *		in stdin.
   *	
-  * USAGE:	./reward <coefs.dat 
-  *
-  * CALLED BY:	
+  * USAGE:	./eval_nominal_orbit < coefs.dat
   *
   */
 

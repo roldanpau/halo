@@ -30,6 +30,7 @@
 	static const double T = 0.3059226605957322E+01;
 
 	static const double CORREC_TIME = T;
+
 	// SHADOW_TIME can be up to 3*T (for I.C. at t=0), but needs to be reduced to
 	// 2*T for I.C. at t=T/4.
 	// static const double SHADOW_TIME = 3*T;

@@ -1,7 +1,20 @@
+## \file halo.py
+#
+# \brief Integrate and print halo orbit for one period.
+#
+# USAGE: Generate halo orbit with
+#    python halo.py > orbit.dat
+# and then plot with
+#    gnuplot 'orbit.plt' 
+
 import os
-import sys              # sys.stdout.flush
+import sys              # sys.stdout.flush, sys.stderr
 from ctypes import *
 import numpy as np
+
+## Define new funtion to print to stderr
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 current_dir = os.getcwd()
 _halo = CDLL(current_dir + "/libhalo.so")
@@ -37,8 +50,8 @@ hmin = h            # min step size
 hmax = h            # max step size
 bPrint = 1          # set print flag to True
 
-print("The initial condition is: ", x)
-print("The step size is: ", h, flush=True)
+eprint("The initial condition is: ", x)
+eprint("The step size is: ", h, flush=True)
 y = int_rtbp(t, x, tol, hmin, hmax, bPrint)
-print("The final condition is: ", y)
-print("Error = Initial condition - Final condition = ", np.subtract(x, y))
+eprint("The final condition is: ", y)
+eprint("Error = Initial condition - Final condition = ", np.subtract(x, y))

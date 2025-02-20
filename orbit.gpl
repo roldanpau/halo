@@ -3,8 +3,9 @@
 
 set xlabel '$x$'
 set ylabel '$y$'
+set zlabel '$z$'
 
-plot "orbit.dat" u 2:4 w l
+splot "orbit.dat" u 2:4:6 w l
 
 unset out
 unset term

@@ -57,6 +57,13 @@ int int_rtbp(double total_time, double *x, double tol, double hmin, double
       rk78(&t,x,&h,tol,hmin,hmax,DIM,rtbp);
    }
 
+   /* print last point */
+   if(bPrint)
+   {
+	   printf("%24.16e", t);
+	   for(int i=0; i<DIM; i++) printf("%24.16e", x[i]);
+	   printf("\n");
+   }
    fflush(stdout);
 
    end_rk78(DIM);
