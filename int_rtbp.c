@@ -14,6 +14,12 @@
 #include "rk78.h"
 #include "int_rtbp.h"	/* mu, DIM */
 
+/* routine rtbp below must "see" this value */
+const double mu = 3.040357143000000E-06; 
+
+/** \brief Dimension of the RTBP. */
+const size_t DIM = 6;
+
 /** 
   * \brief Integrate trajectory of the RTBP.
   *

@@ -3,7 +3,7 @@
 #
 # Generate a table of labelled examples of the form
 # x y z dx dy dz dv
-# associating to each state (t,x,y,z,dx,dy,dz) the correction dv (magnitude
+# associating to each state (x,y,z,dx,dy,dz) the correction dv (magnitude
 # applied in the direction of current velocity).
 # 
 # We generate these examples by taking a bunch of initial conditions inside a

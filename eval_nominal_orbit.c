@@ -43,7 +43,7 @@ main (int argc, char *argv[])
 	read_coefs(N, A, B);
 
 	/* Integrate nominal orbit, using Fourier */
-	eval_orbit(N, A, B, deg, T/8, p);
+	eval_orbit(N, A, B, deg, T/2, p);
 
 	fprintf(stderr, "Final condition (nominal orbit): %e %e %e %e %e %e\n", p[0],
 			p[1], p[2], p[3], p[4], p[5]);

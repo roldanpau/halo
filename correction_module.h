@@ -1,3 +1,5 @@
+#include "section.h"	// section_t
+
 static const double GOLDEN_FRACT = 0.381966;	///< Fraction of a circle occupied by the golden angle
 	
 /** \enum correction_t
@@ -23,3 +25,6 @@ double correction_opt(double q[DIM], double SHADOW_TIME, correction_t corr,
 		double q_new[DIM]);
 double int_correction_opt(double q_Masde[DIM], double CORREC_TIME, double
 		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM]);
+double int_sec_correction_opt(double q_Masde[DIM], section_t sec, double
+		SHADOW_TIME, correction_t corr, double q90[DIM], double q90_new[DIM],
+		double *ti);
