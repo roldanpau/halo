@@ -49,6 +49,20 @@ double WrapTwoPI(double fAng)
 }
 
 /**
+ * \brief Given vectors \f$ v1, v2 \f$, compute their difference v3 = v1-v2.
+ *
+ * @param[in] n			dimension of vectors v1,v2,v3
+ * @param[in] v1		vector1
+ * @param[in] v2		vector2
+ * @param[out] v3		vector3
+ */
+void dbldif(int n, double v1[const], double v2[const], double v3[])
+{
+	for(int i=0; i<n; i++)
+		v3[i] = v1[i] - v2[i];
+}
+
+/**
  * \brief Given vector \f$ v \f$, compute its Euclidean norm
  *
  * @param[in] n     dimension of vector

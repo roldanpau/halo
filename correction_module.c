@@ -28,7 +28,7 @@
 #include "cv_module.h"			// posvel_to_posmom
 #include "utils_module.h"		// norm, dblcpy
 #include "correction_module.h"	// correction_t
-#include "prtbp.h"			
+#include "prtbp_module.h"		// prtbp
 #include "section.h"			// SEC1, SEC2
 
 /**

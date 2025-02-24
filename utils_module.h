@@ -46,4 +46,5 @@ double WrapPosNegPI(double fAng);
   */
 double WrapTwoPI(double fAng);
 
+void dbldif(int n, double v1[const], double v2[const], double v3[]);
 double norm(int n, double v[const]);

@@ -19,7 +19,8 @@
 #include <math.h>				// M_PI
 
 #include "int_rtbp.h"			// DIM
-#include "correction_module.h"	// int_sec-correction_opt
+#include "section.h"			// section_t
+#include "correction_module.h"	// int_sec_correction_opt
 #include "utils_module.h"		// dblprint
 
 /** \brief Period of nominal halo orbit. 
