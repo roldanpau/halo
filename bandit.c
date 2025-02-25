@@ -20,6 +20,7 @@
   */
 
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>	// gsl_ran_gaussian
 
 #include "bandit_module.h"
 
@@ -43,6 +44,8 @@ main (int argc, char *argv[])
 	double Q[NACT];		// Estimated value of each action
 	int N[NACT];		// Number of times each action has been selected
 
+    /* Use a random number generator to produce variates from a Normal
+     * distribution */
 	const gsl_rng_type *T;
 	gsl_rng *r;
 
@@ -55,12 +58,14 @@ main (int argc, char *argv[])
 		N[a] = 0;
 	}
 
+    /* create a generator chosen by the
+    environment variable GSL_RNG_TYPE */
 	gsl_rng_env_setup();
 	T = gsl_rng_default;
 	r = gsl_rng_alloc (T);
 
 	// Loop for 500 action selections
-	for(n=0; n<500; n++) {
+	for(n=0; n<1000; n++) {
 		double u = gsl_rng_uniform(r);	// produce uniform rand num in [0,1)
 
 		// With prob 1-eps, do this
@@ -78,6 +83,10 @@ main (int argc, char *argv[])
 			a = (gsl_rng_uniform(r)<0.5 ? 0:1);
 		}
 
+		/* To simulate uncertain observations, add some noise to nominal i.c. */
+		for(int i=0; i<6; i++)
+			q[i] += gsl_ran_gaussian(r, q[i]*1.e-5);
+		
 		// Perform action and collect reward
 		err = bandit(q, a+1, &reward);
 		if(err) {

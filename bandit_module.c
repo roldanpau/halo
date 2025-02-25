@@ -85,12 +85,16 @@ int bandit1(double q[DIM], double *reward)
 	double dif[DIM];	/* |q(T) - halo(T) */
 	double cost;
 
+	// auxiliary variables
+	double q_bak[DIM];	/* backup of q */
+
 	// Halo orbit at SEC1, given as x,y,z,xd,yd,zd
     double X1[] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
     0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
     0.0000000000000000E+00};
 
 	/* Obtain optimal correction to q */
+	dblcpy(q_bak, q, DIM);
 	dv = correction_opt(q, SHADOW_TIME, CORRECTION_ST, q_new);
 	if(dv == 0)
 		return 1;	// Error performing action 1
@@ -102,7 +106,7 @@ int bandit1(double q[DIM], double *reward)
 	prtbp(mu, SEC1, 1, q_new_posmom, &ti);
 	posmom_to_posvel(q_new_posmom, q);
 
-	dbldif(DIM,q,X1,dif);
+	dbldif(DIM,q,q_bak,dif);
 	cost = w1*fabs(dv) + w2*norm(DIM,dif);
 	*reward = -cost;
 	return 0;
@@ -117,6 +121,9 @@ int bandit2(double q[DIM], double *reward)
 	double dif[DIM];	/* |q(T/2) - halo(T/2) */
 	double cost=0;
 
+	// auxiliary variables
+	double q_bak[DIM];	/* backup of q */
+
 	// Halo orbit at SEC1, given as x,y,z,xd,yd,zd
     double X1[] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
     0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
@@ -128,6 +135,7 @@ int bandit2(double q[DIM], double *reward)
 		-1.944646615910156e-15};
 
 	/* Obtain optimal correction to q */
+	dblcpy(q_bak, q, DIM);
 	dv = correction_opt(q, SHADOW_TIME, CORRECTION_ST, q_new);
 	if(dv == 0)
 		return 1;	// Error performing action 1
@@ -139,8 +147,9 @@ int bandit2(double q[DIM], double *reward)
 	prtbp(mu, SEC2, 1, q_new_posmom, &ti);
 	posmom_to_posvel(q_new_posmom, q);
 
-	dbldif(DIM,q,X2,dif);
-	cost += (w1*fabs(dv) + w2*0.5*norm(DIM,dif));
+	//dbldif(DIM,q,q_bak,dif);
+	//cost += (w1*fabs(dv) + w2*0.5*norm(DIM,dif));
+	cost += w1*fabs(dv);
 
 	/* Obtain optimal correction to q */
 	dv = correction_opt(q, SHADOW_TIME, CORRECTION_ST, q_new);
@@ -153,8 +162,8 @@ int bandit2(double q[DIM], double *reward)
 	prtbp(mu, SEC1, 1, q_new_posmom, &ti);
 	posmom_to_posvel(q_new_posmom, q);
 
-	dbldif(DIM,q,X1,dif);
-	cost += (w1*fabs(dv) + w2*0.5*norm(DIM,dif));
+	dbldif(DIM,q,q_bak,dif);
+	cost += (w1*fabs(dv) + w2*norm(DIM,dif));
 
 	*reward = -cost;
 	return 0;
