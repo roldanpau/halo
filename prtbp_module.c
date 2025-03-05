@@ -9,8 +9,9 @@
 #include <gsl/gsl_errno.h>	// GSL_SUCCESS
 #include <gsl/gsl_roots.h>
 
-#include "int_rtbp.h"           // DIM, int_rtbp
-#include "section.h"
+#include "int_rtbp.h"		// DIM, int_rtbp
+#include "section.h"		// section_t
+#include "utils_module.h"	// dbldif
 
 const double POINCARE_TOL=1.e-16;
 const double TANGENT_TOL=1.e-6;     ///< tolerance for tangent condition
@@ -43,11 +44,10 @@ int frtbp(double mu_loc, double t1, double x[DIM])
   This function determines if the flow is tangent to the Poincare 
   section at the point A.
 
-  \param[in] sec 	type of Poincare section (sect = SEC1 or SEC2).
+  \param[in] sec 	Poincare section
   \param[in] a 		point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
 
   \returns true the flow is tangent, false if it is not.
-  */
 bool tangent(section_t sec, double a[DIM])
 {
    double x = a[0];
@@ -63,38 +63,41 @@ bool tangent(section_t sec, double a[DIM])
    }
    return(false);
 }
+  */
+
+/** 
+  This function determines the distance from point a to section sec
+
+  \param[in] sec 	Poincare section
+  \param[in] a 		point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
+
+  \returns distance from a to sec.
+  */
+double dist2sec(section_t sec, double a[DIM])
+{
+   double aa[3];
+   double d[3];
+
+   aa[0] = a[0];
+   aa[1] = a[2];
+   aa[2] = a[4];
+   dbldif(3, aa, sec.p, d);
+   return dot(3, d, sec.n);
+}
 
 /** 
   This function determines if the point A is exactly on the section.
 
-  \param[in] sec 	type of Poincare section (sect = SEC1 or SEC2).
+  \param[in] sec 	Poincare section
   \param[in] a 		point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
 
   \returns true if point $a$ is exactly on section, false if it is not.
   */
 bool onsection (section_t sec, double a[DIM])
 {
-   bool bonsection = false;
+   double dist = dist2sec(sec, a);
 
-   double x = a[0];
-   double y = a[2];
-   double py = a[3];
-   double vy = py-x;
-
-   switch(sec)
-   {
-      case SEC1 :       // section {y=0, v_y>0}
-         {
-            bonsection = (y == 0 && vy > 0);
-            break;
-         }
-      case SEC2 :       // section {y=0, v_y<0}
-         {
-            bonsection = (y == 0 && vy < 0);
-            break;
-         }
-   }
-   return(bonsection);
+   return(dist == 0);
 }
 
 /**
@@ -102,40 +105,39 @@ bool onsection (section_t sec, double a[DIM])
   This function determines if the trajectory from $a$ to $b$ does cross the
   poincare section sec or not.
 
-  \param[in] sec 	type of Poincare section (sec = SEC1 or SEC2).
+  \param[in] sec 	Poincare section
   \param[in] a		First point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
   \param[in] b		Second point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
 
   \return 		true if trajectory cuts section, false if it does not.
   */
-// NOTES
-// =====
-// In fact, we should check if $v_y>0$ (or $v_y<0$) at the point $c$ that's
-// precisely on the section, not at the point $b$.
-// However, we don't expect $v_y$ to change much between these two points.
 
 bool crossing (section_t sec, double a[DIM], double b[DIM])
 {
-   double x = a[0];
-   double py = a[3];
-   double vy = py-x;
+   /* auxiliary vars */
+   double dist1, dist2;
 
-   bool bcrossing = false;
+   dist1 = dist2sec(sec,a);
+   dist2 = dist2sec(sec,b);
+   
+   return(dist1<0 && dist2>0);
+}
 
-   switch(sec)
-   {
-      case SEC1 :       // section {y=0, v_y>0}
-         {
-            bcrossing = (a[2]*b[2]<0 && vy>0);
-            break;
-         }
-      case SEC2 :       // section {y=0, v_y<0}
-         {
-            bcrossing = (a[2]*b[2]<0 && vy<0);
-            break;
-         }
-   }
-   return(bcrossing);
+/**
+ * \brief Project point \f$ p \f$ onto section sec (only position coords).
+ *
+ * @param[in] sec   section (of dimension 3)
+ * @param[in,out] p     point
+ */
+double proj(section_t sec, double p[])
+{
+	double dist = dist2sec(sec, p);    /* dist = scalar distance from point to
+										  plane along the normal */
+
+    /* Multiply the unit normal vector by the distance, and subtract that
+     * vector from your point. */
+    for(int i=0; i<3; i++)
+        p[2*i] -= dist*sec.n[i];
 }
 
 // NOTES
@@ -158,11 +160,13 @@ int prtbp(double mu, section_t sec, int cuts, double x[DIM], double *ti)
    int i,n;
    double t1;
 
+   /* We don't check this for the moment (for simplicity/lazyness)...
    if(tangent(sec,x))
    {
        perror("Flow is tangent to section. Cannot compute Poincare map!\n");
        exit(EXIT_FAILURE);
    }
+   */
 
    n=0;
    while(n!=cuts)
@@ -214,7 +218,7 @@ int prtbp(double mu, section_t sec, int cuts, double x[DIM], double *ti)
    }
    // Here, point x is on section with tolerance POINCARE_TOL_DEL. 
    // We force x to be exactly on section.
-   x[2] = 0;    // y
+   proj(sec,x);
 
    // Set time to reach Poincare section
    (*ti)=t_pre+t1;
@@ -292,7 +296,7 @@ int prtbp_inv(double mu, section_t sec, int cuts, double x[DIM], double *ti)
    }
    // Here, point x is on section with tolerance POINCARE_TOL_DEL. 
    // We force x to be exactly on section.
-   x[2] = 0;    // y
+   proj(sec,x);
 
    // Set time to reach Poincare section
    (*ti)=t_pre+t1;
@@ -318,7 +322,7 @@ int prtbp_inv(double mu, section_t sec, int cuts, double x[DIM], double *ti)
 // mu
 //    mass parameter of the RTBP
 // sec
-//    type of Poincare section = {SEC1,SEC2}
+//    Poincare section
 // epsabs
 //    maximum desired error bound (tolerance) for intersection.
 //    A point $p=(x,y,p_x,p_y)$ is considered to intersect the section if
@@ -405,7 +409,7 @@ double inter_f(double t, void *p)
    int i, status;
    struct inter_f_params *params = (struct inter_f_params *)p;
    double mu = (params->mu);
-   //section_t sec = (params->sec);	// not used
+   section_t sec = (params->sec);	// not used
    double x = (params->x); 
    double px = (params->px);
    double y = (params->y); 
@@ -427,5 +431,5 @@ double inter_f(double t, void *p)
       fprintf(stderr, "inter_f: error computing flow");
       exit(EXIT_FAILURE);
    }
-   return(pt[2]);
+   return(dist2sec(sec,pt));
 }

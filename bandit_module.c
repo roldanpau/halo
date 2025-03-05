@@ -31,6 +31,11 @@ static const double SHADOW_TIME = 2*T;
 static const double w1=1;	//< Weight of 'fuel' cost
 static const double w2=0;	//< Weight of 'closeness' cost
 
+static const section_t SEC1 = {{-0.9916647163367744E+00,  0.0000000000000000E+00,
+	0.8983543483564242E-03},{0.0,1.0,0.0}}; 
+static const section_t SEC2 = {{-9.888427653607404e-01, 0.000000000000000e+00,
+		-1.121019578563241e-03},{0.0,-1.0,0.0}}; 
+
 // Forward declarations
 int bandit1(double q[DIM], double *reward);
 int bandit2(double q[DIM], double *reward);
@@ -88,11 +93,6 @@ int bandit1(double q[DIM], double *reward)
 	// auxiliary variables
 	double q_bak[DIM];	/* backup of q */
 
-	// Halo orbit at SEC1, given as x,y,z,xd,yd,zd
-    double X1[] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
-    0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
-    0.0000000000000000E+00};
-
 	/* Obtain optimal correction to q */
 	dblcpy(q_bak, q, DIM);
 	dv = correction_opt(q, SHADOW_TIME, CORRECTION_ST, q_new);
@@ -123,16 +123,6 @@ int bandit2(double q[DIM], double *reward)
 
 	// auxiliary variables
 	double q_bak[DIM];	/* backup of q */
-
-	// Halo orbit at SEC1, given as x,y,z,xd,yd,zd
-    double X1[] = {-0.9916647163367744E+00,  0.0000000000000000E+00,
-    0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
-    0.0000000000000000E+00};
-
-	// Halo orbit at SEC2, given as x,y,z,xd,yd,zd
-	double X2[] = {-9.888427653607404e-01, 0.000000000000000e+00,
-		-1.121019578563241e-03, 1.667941767876855e-14, -9.033484614164311e-03,
-		-1.944646615910156e-15};
 
 	/* Obtain optimal correction to q */
 	dblcpy(q_bak, q, DIM);

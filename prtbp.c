@@ -36,6 +36,11 @@
 #include "prtbp_module.h"	// prtbp
 #include "cv_module.h"	// posvel_to_posmom, posmom_to_posvel
 
+static const section_t SEC1 = {{-0.9916647163367744E+00,  0.0000000000000000E+00,
+	0.8983543483564242E-03},{0.0,1.0,0.0}}; 
+static const section_t SEC2 = {{-9.888427653607404e-01, 0.000000000000000e+00,
+		-1.121019578563241e-03},{0.0,-1.0,0.0}}; 
+
 int main( )
 {
    double mu;

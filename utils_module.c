@@ -77,3 +77,20 @@ double norm(int n, double v[const])
 		res += (v[i]*v[i]);
 	return sqrt(res);
 }
+
+/**
+ * \brief Given vectors \f$ v_1, v_2 \f$, compute their dot product.
+ *
+ * @param[in] n     dimension of vectors
+ * @param[in] v1     vector
+ * @param[in] v2     vector
+ *
+ * @returns			Dot product v1*v2.
+ */
+double dot(int n, double v1[const], double v2[const])
+{
+	double res = 0;
+	for(int i=0; i<n; i++)
+		res += (v1[i]*v2[i]);
+	return res;
+}

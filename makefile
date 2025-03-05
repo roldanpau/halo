@@ -19,7 +19,7 @@ fft: fft_module.o
 
 eval_nominal_orbit: fft_module.o
 
-prtbp: rk78.o int_rtbp.o cv_module.o prtbp_module.o
+prtbp: rk78.o int_rtbp.o cv_module.o utils_module.o prtbp_module.o
 
 reward: rk78.o int_rtbp.o fft_module.o utils_module.o
 

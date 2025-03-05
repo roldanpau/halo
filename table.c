@@ -37,6 +37,9 @@ static const double SHADOW_TIME = 2*T;
 //static const double twentyYrs = 20*2*M_PI;	///< 20 yrs (in normalized units)
 static const double twentyYrs = 1000*2*M_PI;
 
+static const section_t SEC1 = {{-0.9916647163367744E+00,  0.0000000000000000E+00,
+	0.8983543483564242E-03},{0.0,1.0,0.0}}; 
+
 int
 main (int argc, char *argv[])
 {
