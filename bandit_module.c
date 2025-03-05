@@ -28,12 +28,12 @@ static const double T = 0.3059226605957322E+01;
 // static const double SHADOW_TIME = 3*T;
 static const double SHADOW_TIME = 2*T;
 
+static const double w1=1;	//< Weight of 'fuel' cost
+static const double w2=0;	//< Weight of 'closeness' cost
+
 // Forward declarations
 int bandit1(double q[DIM], double *reward);
 int bandit2(double q[DIM], double *reward);
-
-static const double w1=0;
-static const double w2=1;
 
 /**
  * \brief Take an action and return corresponding reward.

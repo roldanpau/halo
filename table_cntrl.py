@@ -1,4 +1,4 @@
-## \file table_ctrl.py
+## \file table_cntrl.py
 # \brief Generate table of optimal control maneuvers for supervised learning
 #
 # Generate a table of labelled examples of the form
@@ -13,8 +13,9 @@
 #
 #  USAGE:  
 #   (Remember to `conda activate halo' environment first)
-#   python table_ctrl.py
-#   python table_ctrl.py > maneuvers_ctrl.csv
+#   python table_cntrl.py
+#   python table_cntrl.py > maneuvers_cntrl.csv
+#   python table_cntrl.py > maneuvers_cntrl_T2.csv
 
 import os
 import sys                      # sys.stdout.flush, sys.exit
@@ -33,6 +34,18 @@ R = 1.e-4
 #    0.8983543483564242E-03, -0.0000000000000000E+00,  0.9931014021976879E-02,
 #    0.0000000000000000E+00])
 
+## Halo orbit at SEC2 {y=0, vy<0} (which is approximately at T/2), given as
+# x,y,z,xd,yd,zd
+X1 = np.array([-9.888427653607404e-01, 0.000000000000000e+00,
+        -1.121019578563241e-03, 1.667941767876855e-14, -9.033484614164311e-03,
+        -1.944646615910156e-15])
+
+## I.c. at HALF PERIOD (T/2) of the nominal halo orbit
+## In (x,y,z, dx=px+y, dy=py-x, dz) coords.
+#X1 = np.array({-9.905881e-01, 4.517090e-03, -2.167137e-04,
+#	-1.456353e-03+4.517090e-03, -9.909699e-01-(-9.905881e-01),
+#	-2.007546e-03])
+
 ## I.c. at QUARTER PERIOD (T/4) of the nominal halo orbit
 ## (x,px,y,py,z,pz) = -9.905881e-01 -1.456353e-03 4.517090e-03 -9.909699e-01 -2.167137e-04 -2.007546e-03
 ## In (x,y,z, dx=px+y, dy=py-x, dz) coords.
@@ -43,9 +56,9 @@ R = 1.e-4
 ## I.c. at T/8 of the nominal halo orbit
 ## (x,px,y,py,z,pz) = -9.914575e-01 -2.013749e-03 3.327175e-03 -9.850071e-01 5.350106e-04 -1.703465e-03
 ## In (x,y,z, dx=px+y, dy=py-x, dz) coords.
-X1 = np.array([-9.914575e-01, 3.327175e-03, 5.350106e-04,
-    -2.013749e-03+3.327175e-03, -9.850071e-01-(-9.914575e-01),
-    -1.703465e-03])
+#X1 = np.array([-9.914575e-01, 3.327175e-03, 5.350106e-04,
+#    -2.013749e-03+3.327175e-03, -9.850071e-01-(-9.914575e-01),
+#    -1.703465e-03])
 
 ## Amount of points inside the cube
 amount = 1000

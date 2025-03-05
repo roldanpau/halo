@@ -15,7 +15,8 @@
   * Your objective is to maximize the expected total reward over some time
   * period, for example, over 1000 action selections
   *
-  * USAGE:	./bandit
+  * USAGE:	./bandit > fuel_value
+  * and then plot with bandit.gpl.
   *
   */
 
@@ -64,7 +65,7 @@ main (int argc, char *argv[])
 	T = gsl_rng_default;
 	r = gsl_rng_alloc (T);
 
-	// Loop for 500 action selections
+	// Loop for 1000 action selections
 	for(n=0; n<1000; n++) {
 		double u = gsl_rng_uniform(r);	// produce uniform rand num in [0,1)
 
@@ -83,9 +84,10 @@ main (int argc, char *argv[])
 			a = (gsl_rng_uniform(r)<0.5 ? 0:1);
 		}
 
-		/* To simulate uncertain observations, add some noise to nominal i.c. */
+		/* To simulate uncertain observations, we try to add some noise to
+		 * nominal i.c.
 		for(int i=0; i<6; i++)
-			q[i] += gsl_ran_gaussian(r, q[i]*1.e-5);
+			q[i] += gsl_ran_gaussian(r, q[i]*1.e-5); */
 		
 		// Perform action and collect reward
 		err = bandit(q, a+1, &reward);
