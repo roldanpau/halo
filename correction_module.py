@@ -44,6 +44,7 @@ def correction_regression(q):
     dv_scaled = lin_reg.predict(q_poly)
 
     dv = scaler_target.inverse_transform(dv_scaled)
+    #print("dv: ", dv)
     return dv
 
 

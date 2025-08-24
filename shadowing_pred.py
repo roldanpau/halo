@@ -6,11 +6,15 @@
 #
 #  This program is OBSOLETE, since shadowing() does not use
 #  correction_NN/correction_supervised anymore, it uses correction_opt!!!
+#  The reason we don't do shadowing using a prediction model is that the
+#  prediction model was derived from a table of control maneuvers and has a
+#  RMSE of 10^{-6}, which is not good enough to predict shadowing maneuvers
+#  (with stdev 10^{-11}).
 #  
 #  USAGE:  
 #   (Remember to `conda activate halo' environment first)
 #   (Remember to generate the correct regression predictor by running the
-#   supervised.ipynb notebook first)
+#   supervised_cntrl.ipynb notebook first)
 #   python shadowing_pred.py
 #   python shadowing_pred.py >shadowing_pred.res 2>shadowing_pred.err
 

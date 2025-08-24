@@ -86,18 +86,21 @@ double dist2sec(section_t sec, double a[DIM])
 }
 
 /** 
-  This function determines if the point A is exactly on the section.
+  This function determines if the point A is on the section.
+
+  This function determines if the point A is on the section (up to numerical
+  tolerance POINCARE_TOL).
 
   \param[in] sec 	Poincare section
   \param[in] a 		point, 6 coordinates: (x, p_x, y, p_y, z, p_z).
 
-  \returns true if point $a$ is exactly on section, false if it is not.
+  \returns true if point $a$ is on section, false if it is not.
   */
 bool onsection (section_t sec, double a[DIM])
 {
    double dist = dist2sec(sec, a);
 
-   return(dist == 0);
+   return(fabs(dist) < POINCARE_TOL);
 }
 
 /**
@@ -120,7 +123,7 @@ bool crossing (section_t sec, double a[DIM], double b[DIM])
    dist1 = dist2sec(sec,a);
    dist2 = dist2sec(sec,b);
    
-   return(dist1<0 && dist2>0);
+   return(dist1<-POINCARE_TOL && dist2>POINCARE_TOL);
 }
 
 /**
@@ -196,9 +199,7 @@ int prtbp(double mu, section_t sec, int cuts, double x[DIM], double *ti)
       while(!(onsection(sec,x) || crossing(sec,x_pre,x))); 
       n++;
    }
-   // point "x" is exactly on the section
-   // This would be very unlikely...
-   if(onsection(sec,x))
+   if(onsection(sec,x))		// point "x" is on the section
    {
       (*ti)=t;
       return(0);

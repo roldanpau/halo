@@ -1,11 +1,24 @@
-#set term tikz
-#set out "orbit.tex"
+set term tikz
+set out "orbit.tex"
 
 set xlabel '$x$'
 set ylabel '$y$'
 set zlabel '$z$'
 
-splot "orbit.dat" u 2:4:6 w l
+# L_1 equilibrium point
+$L1 << EOD
+-0.99003 0 0
+EOD
+
+# E^s(L_1), stable direction associated to L_1
+$Es << EOD
+# For plotting vector, we need x y z dx dy dz, so L1 followed by (scaled)
+# 0.01*Es
+-0.99003 0 0 0.00323988273471917 0.00173290594261497 0
+EOD
+
+splot "orbit.dat" u 2:4:6 w l notitle, $L1 with points title '$L1$', \
+$Es with vectors title '$E^s(L_1)$'
 
 unset out
 unset term

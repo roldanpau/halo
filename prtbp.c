@@ -36,10 +36,17 @@
 #include "prtbp_module.h"	// prtbp
 #include "cv_module.h"	// posvel_to_posmom, posmom_to_posvel
 
+// Section at T
 static const section_t SEC1 = {{-0.9916647163367744E+00,  0.0000000000000000E+00,
 	0.8983543483564242E-03},{0.0,1.0,0.0}}; 
+
+// Section at T/2 (aprox)
 static const section_t SEC2 = {{-9.888427653607404e-01, 0.000000000000000e+00,
-		-1.121019578563241e-03},{0.0,-1.0,0.0}}; 
+	-1.121019578563241e-03},{0.0,-1.0,0.0}}; 
+
+// Section at T/4 (aprox)
+static const section_t SEC3 = {{-9.905881e-01, 4.517090e-03, -2.167137e-04},
+	{1.0,0.0,0.0}}; 
 
 int main( )
 {
@@ -65,6 +72,8 @@ int main( )
       sec = SEC1;
    else if (strcmp(section_str,"SEC2") == 0)
       sec = SEC2;
+   else if (strcmp(section_str,"SEC3") == 0)
+      sec = SEC3;
    else
    {
       perror("main: error reading section string");

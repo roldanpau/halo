@@ -1,7 +1,8 @@
-progs = fft eval_nominal_orbit prtbp reward correction shadowing table bandit
+progs = fft eval_nominal_orbit prtbp reward correction shadowing table bandit \
+		bandit2
 
 OBJS = rk78.o int_rtbp.o prtbp_module.o fft_module.o utils_module.o cv_module.o \
-	   correction_module.o bandit_module.o
+	   correction_module.o bandit_module.o bandit2_module.o
 
 CFLAGS = -O3 -fPIC #-g -fPIC
 LDFLAGS = 
@@ -30,6 +31,8 @@ shadowing: rk78.o int_rtbp.o prtbp_module.o utils_module.o cv_module.o correctio
 table: rk78.o int_rtbp.o prtbp_module.o utils_module.o cv_module.o correction_module.o
 
 bandit: rk78.o int_rtbp.o prtbp_module.o utils_module.o cv_module.o correction_module.o bandit_module.o
+
+bandit2: rk78.o int_rtbp.o prtbp_module.o utils_module.o cv_module.o correction_module.o bandit2_module.o
 
 clean:
 	rm libhalo.so $(OBJS) $(progs)

@@ -37,8 +37,8 @@ static const section_t SEC2 = {{-9.888427653607404e-01, 0.000000000000000e+00,
 		-1.121019578563241e-03},{0.0,-1.0,0.0}}; 
 
 // Forward declarations
-int bandit1(double q[DIM], double *reward);
-int bandit2(double q[DIM], double *reward);
+static int bandit1(double q[DIM], double *reward);
+static int bandit2(double q[DIM], double *reward);
 
 /**
  * \brief Take an action and return corresponding reward.

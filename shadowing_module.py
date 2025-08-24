@@ -52,7 +52,7 @@ def int_correction_opt(q_Masde, CORREC_TIME, SHADOW_TIME, corr, q90, q90_new):
     return dv, np.array(q90), np.array(q90_new)
 
 _halo.correction_opt.restype = c_double
-_halo.int_correction_opt.argtypes = (POINTER(c_double), c_double, c_int,
+_halo.correction_opt.argtypes = (POINTER(c_double), c_double, c_int,
         POINTER(c_double))
 
 ## Interface to corresponding C function
@@ -148,6 +148,7 @@ def shadowing(X1, yrs):
 
     # Find correction maneuver according to optimal method
     [dv, q90_new] = correction_opt(X1, SHADOW_TIME, 1, q90_new)
+    #dv = correction_regression(X1)
     if(dv==0):
         return False
 
@@ -165,6 +166,7 @@ def shadowing(X1, yrs):
         # Find correction maneuver according to optimal method
         [dv, q90, q90_new] = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME,
                 1, q90, q90_new)
+        #dv = correction_regression(X1)
         if(dv==0):
             return False
 
@@ -184,6 +186,7 @@ def shadowing(X1, yrs):
         # Find correction maneuver according to optimal method
         [dv, q90, q90_new] = int_correction_opt(X1, CORREC_TIME, SHADOW_TIME,
                 1, q90, q90_new)
+        #dv = correction_regression(X1)
         if(dv==0):
             return False
 

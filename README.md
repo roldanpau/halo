@@ -26,9 +26,15 @@ below).
 
 * Download code to any directory and type `make` to build C programs.
 * `make clean` to clean up C objects and binaries.
-* Use conda to create the same virtual environment as mine with
+* If you plan to use the provided jupyter notebooks (supervised_cntrl.ipynb,
+neuralnet_cntrl.ipynb, etc.), use conda to create the same virtual
+environment as mine with
 ```
 conda create --name halo --file requirements.txt
+```
+and then, from the `base' conda environment, run the jupyter server with
+```
+jupyter notebook
 ```
 
 ### Executing programs
@@ -48,6 +54,9 @@ python shadowing_pred.py > shadowing_pred.res 2> shadowing_pred.err
 ./correction
 ./shadowing
 ```
+* The project also includes several jupyter notebooks related to Machine
+Learning, which are served directly by the jupyter notebook server (on the
+browser).
 
 ## Help
 

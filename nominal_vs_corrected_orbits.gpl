@@ -1,0 +1,15 @@
+# Check that the corrected orbit does not drift away from nominal orbit too
+# much.
+
+#set term tikz
+#set out "orbit.tex"
+
+set xlabel '$x$'
+set ylabel '$y$'
+set zlabel '$z$'
+
+splot "orbit.dat" u 2:4:6 w l \
+, "fuel_value2_seed1" u 5:6:7 w p
+
+unset out
+unset term
