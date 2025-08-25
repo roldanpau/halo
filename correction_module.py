@@ -26,6 +26,7 @@ def correction_regression(q):
     scaler_target = joblib.load('scaler_target_supervised.gz')
 
     # Reshape q with 1 row and 6 columns
+    #print("q: ", q)
     q_reshaped = q.reshape(1,-1)
     #print("q_reshaped: ", q_reshaped)
 
@@ -42,9 +43,12 @@ def correction_regression(q):
     poly_features = PolynomialFeatures(degree=2, include_bias=False)
     q_poly = poly_features.fit_transform(q_scaled)
     dv_scaled = lin_reg.predict(q_poly)
+    #print("dv_scaled: ", dv_scaled)
 
     dv = scaler_target.inverse_transform(dv_scaled)
     #print("dv: ", dv)
+    dv = dv.flatten()
+    #print("dv flattened: ", dv)
     return dv
 
 
