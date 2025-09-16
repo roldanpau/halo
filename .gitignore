@@ -3,3 +3,4 @@ papers/
 __pycache__/
 my_dir/
 .ipynb_checkpoints/
+.virtual_documents/

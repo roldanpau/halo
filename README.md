@@ -28,13 +28,13 @@ below).
 * `make clean` to clean up C objects and binaries.
 * If you plan to use the provided jupyter notebooks (supervised_cntrl.ipynb,
 neuralnet_cntrl.ipynb, etc.), use conda to create the same virtual
-environment as mine with
+environment (called `halo') as mine with
 ```
-conda create --name halo --file requirements.txt
+conda env create -n halo -f environment.yml
 ```
 and then, from the `base' conda environment, run the jupyter server with
 ```
-jupyter notebook
+jupyter lab
 ```
 
 ### Executing programs
